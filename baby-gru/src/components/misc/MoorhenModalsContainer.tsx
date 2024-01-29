@@ -18,12 +18,29 @@ import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResi
 import { MoorhenSceneSettingsModal } from '../modal/MoorhenSceneSettingsModal'
 import { useDispatch, useSelector } from 'react-redux';
 import { moorhen } from '../../types/moorhen';
-import { 
+import {
     setShowCarbohydrateValidationModal,
-    setShowControlsModal, setShowCreateAcedrgLinkModal, setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowFitLigandModal, setShowLigandValidationModal, setShowMapsModal, 
-    setShowMmrrccModal, setShowModelsModal, setShowPepFlipsValidationModal, setShowQuerySequenceModal, setShowRamaPlotModal, setShowSceneSettingsModal, setShowScriptingModal, 
-    setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowWaterValidationModal 
+    setShowControlsModal,
+    setShowCreateAcedrgLinkModal,
+    setShowDiffMapPeaksModal,
+    setShowFillPartialResValidationModal,
+    setShowFitLigandModal,
+    setShowIrisValidationModal,
+    setShowLigandValidationModal,
+    setShowMapsModal,
+    setShowMmrrccModal,
+    setShowModelsModal,
+    setShowPepFlipsValidationModal,
+    setShowQuerySequenceModal,
+    setShowRamaPlotModal,
+    setShowSceneSettingsModal,
+    setShowScriptingModal,
+    setShowUnmodelledBlobsModal,
+    setShowValidationPlotModal,
+    setShowWaterValidationModal
 } from '../../store/activeModalsSlice';
+import {MoorhenIrisValidation} from "../validation-tools/MoorhenIrisValidation";
+import {MoorhenIrisValidationModal} from "../modal/MoorhenIrisValidationModal";
 
 export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const dispatch = useDispatch()
@@ -44,7 +61,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.activeModals.showPepFlipsValidationModal)
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.activeModals.showUnmodelledBlobsModal)
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.activeModals.showCarbohydrateModal)
-
+    const showIrisValidationModal = useSelector((state: moorhen.State) => state.activeModals.showIrisValidationModal)
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.activeModals.showSceneSettingsModal)
 
     return <>
@@ -139,11 +156,19 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
         }
 
         {showCarbohydrateValidationModal &&
-                <MoorhenCarbohydrateValidationModal
-                show={showCarbohydrateValidationModal}
-                setShow={(newVal: boolean) => dispatch(setShowCarbohydrateValidationModal(newVal))}
-                {...props} />
-            }
+            <MoorhenCarbohydrateValidationModal
+            show={showCarbohydrateValidationModal}
+            setShow={(newVal: boolean) => dispatch(setShowCarbohydrateValidationModal(newVal))}
+            {...props} />
+        }
+
+        {showIrisValidationModal &&
+        <MoorhenIrisValidationModal
+            show={showIrisValidationModal}
+            setShow={(newVal: boolean) => dispatch(setShowIrisValidationModal(newVal))}
+            {...props} />
+        }
+
 
         {showPepFlipsValidationModal &&
             <MoorhenPepFlipsModal

@@ -3,7 +3,8 @@ import { MenuItem } from "@mui/material";
 import { useDispatch } from "react-redux";
 import { 
     setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowLigandValidationModal, setShowMmrrccModal, 
-    setShowPepFlipsValidationModal, setShowRamaPlotModal, setShowUnmodelledBlobsModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal ,setShowWaterValidationModal
+    setShowPepFlipsValidationModal, setShowRamaPlotModal, setShowUnmodelledBlobsModal, setShowValidationPlotModal,
+    setShowCarbohydrateValidationModal ,setShowWaterValidationModal, setShowIrisValidationModal
 } from "../../store/activeModalsSlice";
 
 export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
@@ -28,10 +29,14 @@ export const MoorhenValidationMenu = (props: MoorhenNavBarExtendedControlsInterf
             }}>Ligand validation...</MenuItem>
 
             <MenuItem onClick={() => {
+                dispatch(setShowIrisValidationModal(true))
+                document.body.click()
+            }}>Iris validation...</MenuItem>
+
+            <MenuItem onClick={() => {
                 dispatch(setShowCarbohydrateValidationModal(true))
                 document.body.click()
             }}>Carbohydrate validation...</MenuItem>
-
             <MenuItem onClick={() => {
                 dispatch(setShowPepFlipsValidationModal(true))
                 document.body.click()

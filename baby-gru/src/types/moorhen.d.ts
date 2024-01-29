@@ -818,6 +818,7 @@ export namespace moorhen {
             showValidationPlotModal: boolean;
             showLigandValidationModal: boolean;
             showCarbohydrateModal: boolean;
+            showIrisValidationModal: boolean;
             showPepFlipsValidationModal: boolean;
             showFillPartialResValidationModal: boolean;
             showUnmodelledBlobsModal: boolean;

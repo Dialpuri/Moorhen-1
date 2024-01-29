@@ -9,16 +9,18 @@ import iris_module from "iris-validation-backend"
 import { MoorhenMapSelect } from "../select/MoorhenMapSelect"
 import { gemmi } from "../../types/gemmi";
 import { setHoveredAtom } from "../../moorhen"
+import {libcootApi} from "../../types/libcoot";
+import {ChainData, MetricData, ModelData, ResidueData} from "iris-validation/dist/cjs/interface/interface";
+import {MultiResultsBinding} from "iris-validation/dist/esm/interface/interface";
 
-export const MoorhenIrisValidation = (props: {
-    sideBarWidth: number;
-    showSideBar: boolean;
+interface Props extends moorhen.CollectedProps {
     dropdownId: number;
     accordionDropdownId: number;
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    resizeTrigger: boolean;
-    resizeNodeRef: React.RefObject<HTMLDivElement>;
-}) => {
+    setAccordionDropdownId: React.Dispatch<React.SetStateAction<number>>;
+    sideBarWidth: number;
+    showSideBar: boolean;
+}
+export const MoorhenIrisValidation = (props: Props) => {
 
     const dispatch = useDispatch()
     const newCootCommandAlert = useSelector((state: moorhen.State) => state.generalStates.newCootCommandAlert)
@@ -27,7 +29,7 @@ export const MoorhenIrisValidation = (props: {
     const molecules = useSelector((state: moorhen.State) => state.molecules)
     const maps = useSelector((state: moorhen.State) => state.maps)
 
-    const [plotDimensions, setPlotDimensions] = useState<number>(230)
+    const [plotDimensions, setPlotDimensions] = useState<number>(500)
     const [irisData, setIrisData] = useState<null | IrisData>(null)
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
     const [selectedMap, setSelectedMap] = useState<null | number>(null)
@@ -43,63 +45,106 @@ export const MoorhenIrisValidation = (props: {
         setSelectedMap(parseInt(evt.target.value))
     }
 
-    const handleHover = useCallback((residueLabel: string) => {
-        if (selectedModel !== null) {
-            const molecule = molecules.find(item => item.molNo === selectedModel)        
-            if (molecule) {
-                const [chain, resName, resNum] = residueLabel.split('/')
-                const cid = `//${chain}/${resNum}(${resName})`
-                dispatch(setHoveredAtom({molecule, cid}))
-            }
-        }
-    }, [selectedModel, molecules])
+    // const handleHover = useCallback((residueLabel: string) => {
+    //     if (selectedModel !== null) {
+    //         const molecule = molecules.find(item => item.molNo === selectedModel)
+    //         if (molecule) {
+    //             const [chain, resName, resNum] = residueLabel.split('/')
+    //             const cid = `//${chain}/${resNum}(${resName})`
+    //             dispatch(setHoveredAtom({molecule, cid}))
+    //         }
+    //     }
+    // }, [selectedModel, molecules])
+    const handleHover = useCallback(() => {}, [])
 
 
     const handleClick = useCallback((residueLabel: string) => {
         if (selectedModel !== null) {
-            const molecule = molecules.find(item => item.molNo === selectedModel)        
+            const molecule = molecules.find(item => item.molNo === selectedModel)
             if (molecule) {
                 const [chain, resName, resNum] = residueLabel.split('/')
-                const cid = `//${chain}/${resNum}(${resName})`
+                const cid = `//${chain}/${resNum}`
+                console.log(cid)
                 molecule.centreOn(cid)
             }
         }
     }, [selectedModel, molecules])
 
-    useEffect(() => {
-        const fetchData = async () => {
-            if (selectedModel === null || selectedMap === null) {
+    const getAvailableMetrics = (selectedModel: number, selectedMap: number, selectedChain: string) => {
+        const allMetrics = [
+            {command: "density_correlation_analysis", returnType:'validation_data', chainID: selectedChain, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Dens. Corr.'},
+            {command: "density_fit_analysis", returnType:'validation_data', chainID: selectedChain, commandArgs:[selectedModel, selectedMap], needsMapData: true, displayName:'Dens. Fit'},
+            {command: "rotamer_analysis", returnType:'validation_data', chainID: selectedChain, commandArgs:[selectedModel], needsMapData: false, displayName:'Rota.'},
+            {command: "ramachandran_analysis", returnType:'validation_data', chainID: selectedChain, commandArgs:[selectedModel], needsMapData: false, displayName:'Rama.'},
+            {command: "peptide_omega_analysis", returnType:'validation_data', chainID: selectedChain, commandArgs:[selectedModel], needsMapData: false, displayName:'Pept. Omega'},
+        ]
+
+        let currentlyAvailable = []
+        allMetrics.forEach(metric => {
+            if ((metric.needsMapData && selectedMap === null) || selectedModel === null || selectedChain === null) {
                 return
             }
-    
-            const molecule = molecules.find(item => item.molNo === selectedModel)
-            const map = maps.find(item => item.molNo === selectedMap)
-            
-            if (!molecule || !map) {
-                return
-            }
-    
-            const irisModule = await iris_module()
-    
-            const [mapResponse, moleculeData] = await Promise.all([
-                map.getMap(),
-                molecule.getAtoms()
-            ])
-            const map_data = new Uint8Array(mapResponse.data.result.mapData)
-    
-            const moleculeFileName = `${molecule.name}.pdb`
-            const mapFileName = `${map.name}.map`
-            irisModule['FS_createDataFile']('/', mapFileName, map_data, true, true, true)
-            irisModule['FS_createDataFile']('/', moleculeFileName, moleculeData, true, true, true)
-    
-            const backend_call = irisModule.calculate_single_pdb(moleculeFileName, mapFileName, false)
-            setIrisData({
-                data: backend_call.results,
-                chain_list: null,
-                file_list: [moleculeFileName],
-            })
+            currentlyAvailable.push(metric)
+        })
+
+        return currentlyAvailable
+    }
+
+    const fetchData = async (selectedModel: number, selectedMap: number, selectedChain: string) => {
+        if (selectedModel === null || selectedChain === null) {
+            return null
         }
-        fetchData()
+        let availableMetrics = getAvailableMetrics(selectedModel, selectedMap, selectedChain)
+
+        let promises: Promise<moorhen.WorkerResponse<libcootApi.ValidationInformationJS[]>>[] = []
+        availableMetrics.forEach(metric => {
+            const inputData = { message:'coot_command', ...metric }
+            promises.push(props.commandCentre.current.cootCommand(inputData, false))
+        })
+        let responses = await Promise.all(promises)
+
+        let newPlotData: libcootApi.ValidationInformationJS[][] = []
+        responses.forEach(response => {
+            newPlotData.push(response.data.result.result)
+        })
+
+        return newPlotData
+    }
+
+    useEffect(() => {
+        console.log("Calling fetch")
+        fetchData(selectedModel, selectedMap, "A").then((metrics) => {
+            const data: ModelData = {}
+            const chain_data: ChainData = {}
+            const residue_data: ResidueData = {}
+            for (let metricIndex = 0; metricIndex < metrics.length; metricIndex++) {
+                for (let residueIndex = 0; residueIndex < metrics[metricIndex].length; residueIndex++) {
+                    const metric_data: MetricData = {
+                        name: metrics[metricIndex][residueIndex].restype,
+                        value: metrics[metricIndex][residueIndex].value,
+                        seqnum: metrics[metricIndex][residueIndex].seqNum,
+                        metric: `Metric ${metricIndex}`,
+                        type: 'continuous',
+                    }
+                    if (residue_data.hasOwnProperty(metrics[metricIndex][residueIndex].seqNum)) {
+                        residue_data[metrics[metricIndex][residueIndex].seqNum].push(metric_data)
+                    }
+                    else {
+                        residue_data[metrics[metricIndex][residueIndex].seqNum] = [metric_data]
+                    }
+                }
+            }
+
+            chain_data["A"] = residue_data
+            data['input1'] = chain_data
+            console.log(data)
+            const irisData = {
+                data: data,
+                chain_list: ["A"],
+                file_list: ["input1"]
+            };
+            setIrisData(irisData)
+        })
     }, [selectedMap, selectedModel, molecules, maps, newCootCommandAlert])
 
     useEffect(() => {
@@ -122,16 +167,6 @@ export const MoorhenIrisValidation = (props: {
         }
     }, [maps.length])
    
-    useEffect(() => {
-        setTimeout(() => {
-            let plotHeigth = (props.resizeNodeRef.current.clientHeight) - convertRemToPx(15)
-            let plotWidth = (props.resizeNodeRef.current.clientWidth) - convertRemToPx(3)
-            if (plotHeigth > 0 && plotWidth > 0) {
-                plotHeigth > plotWidth ? setPlotDimensions(plotWidth) : setPlotDimensions(plotHeigth)
-            }
-        }, 50);
-
-    }, [width, height, props.resizeTrigger])
 
     const aes: IrisAesthetics = {
         dimensions: [plotDimensions, plotDimensions],
@@ -142,7 +177,7 @@ export const MoorhenIrisValidation = (props: {
 
     const iris_props: IrisProps = {
         results: irisData,
-        from_wasm: true,
+        from_wasm: false,
         aesthetics: aes,
         click_callback: handleClick,
         hover_callback: handleHover

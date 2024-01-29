@@ -14,6 +14,7 @@ export const activeModalsSlice = createSlice({
     showDiffMapPeaksModal: false,
     showValidationPlotModal: false,
     showLigandValidationModal: false,
+    showIrisValidationModal: false,
     showCarbohydrateModal: false,
     showPepFlipsValidationModal: false,
     showFillPartialResValidationModal: false,
@@ -44,6 +45,9 @@ export const activeModalsSlice = createSlice({
     },
     setShowLigandValidationModal: (state, action: { payload: boolean, type: string }) => {
       return { ...state, showLigandValidationModal: action.payload }
+    },
+    setShowIrisValidationModal: (state, action: { payload: boolean, type: string }) => {
+      return { ...state, showIrisValidationModal: action.payload }
     },
     setShowPepFlipsValidationModal: (state, action: { payload: boolean, type: string }) => {
       return { ...state, showPepFlipsValidationModal: action.payload }
@@ -91,7 +95,7 @@ export const {
   setShowModelsModal, setShowMapsModal, setShowCreateAcedrgLinkModal, 
   setShowQuerySequenceModal, setShowScriptingModal, setShowControlsModal,
   focusOnModal, unFocusModal, setShowFitLigandModal, setShowRamaPlotModal, 
-  setShowLigandValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
+  setShowLigandValidationModal, setShowIrisValidationModal, setShowPepFlipsValidationModal, setShowMmrrccModal,
   setShowWaterValidationModal, setShowValidationPlotModal, setShowCarbohydrateValidationModal, setShowUnmodelledBlobsModal,
   setShowDiffMapPeaksModal, setShowFillPartialResValidationModal, setShowSceneSettingsModal
 } = activeModalsSlice.actions
