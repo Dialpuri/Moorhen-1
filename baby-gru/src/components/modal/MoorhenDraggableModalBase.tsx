@@ -51,6 +51,30 @@ function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value
     width: number;
     height: number
 }) => void, handleStart: () => void, resizeNodeRef: React.MutableRefObject<HTMLDivElement | undefined>) {
+    function getCardContent() {
+        return <div ref={props.resizeNodeRef ? props.resizeNodeRef : resizeNodeRef}
+                    style={{
+                        overflowY: props.overflowY,
+                        overflowX: props.overflowX,
+                        height: '100%',
+                        width: '100%',
+                        display: 'block',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}>
+            {props.enforceMaxBodyDimensions ?
+                <div style={props.enforceMaxBodyDimensions ? {
+                    maxHeight: props.maxHeight,
+                    maxWidth: props.maxWidth
+                } : {}}>
+                    {props.body}
+                </div>
+                :
+                props.body
+            }
+        </div>;
+    }
+
     return <Card
         id={modalIdRef.current}
         onClick={() => dispatch(focusOnModal(modalIdRef.current))}
@@ -60,7 +84,9 @@ function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value
             display: props.show ? 'block' : 'none',
             position: 'absolute',
             opacity: opacity,
-            zIndex: currentZIndex
+            zIndex: currentZIndex,
+            width: popOut ? '100%' : 'auto',
+            height: popOut ? '100%' : 'auto'
         }}
         onMouseOver={() => setOpacity(1.0)}
         onMouseOut={() => {
@@ -76,7 +102,7 @@ function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value
         }}>
             {props.headerTitle}
             <Stack gap={2} direction="horizontal">
-                <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}}
+                <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} // PopOut Button
                         onClick={() => setPopOut(!popOut)}>
                     {popOut ? <OpenInNewOff/> : <OpenInNew/>}
                 </Button>
@@ -95,7 +121,7 @@ function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value
             </Stack>
         </Card.Header>
         <Card.Body style={{display: collapse ? 'none' : 'flex', justifyContent: 'center', flexDirection: 'column'}}>
-            <Resizable
+            {popOut ? getCardContent() : <Resizable
                 maxWidth={props.maxWidth}
                 maxHeight={props.maxHeight}
                 minWidth={props.minWidth}
@@ -111,28 +137,9 @@ function getContent(modalIdRef: React.MutableRefObject<string>, dispatch: (value
                 onResizeStop={handleResizeStop}
                 onResizeStart={handleStart}
             >
-                <div ref={props.resizeNodeRef ? props.resizeNodeRef : resizeNodeRef}
-                     style={{
-                         overflowY: props.overflowY,
-                         overflowX: props.overflowX,
-                         height: '100%',
-                         width: '100%',
-                         display: 'block',
-                         alignItems: 'center',
-                         justifyContent: 'center'
-                     }}>
-                    {props.enforceMaxBodyDimensions ?
-                        <div style={props.enforceMaxBodyDimensions ? {
-                            maxHeight: props.maxHeight,
-                            maxWidth: props.maxWidth
-                        } : {}}>
-                            {props.body}
-                        </div>
-                        :
-                        props.body
-                    }
-                </div>
+                {getCardContent()}
             </Resizable>
+            }
         </Card.Body>
         {props.footer &&
             <Card.Footer
@@ -367,25 +374,25 @@ export const MoorhenDraggableModalBase = (props: {
 
     const newWindow = useRef(null);
     const [ready, setReady] = useState(false);
+
     useEffect(() => {
         if (popOut) {
             // Create window
             newWindow.current = window.open(
                 "",
-                "_target",
-                `width=800,height=200,left=220,top=220`
+                `_target_${props.headerTitle}`,
+                `width=800,height=200,left=220,top=220`,
+
             );
+            newWindow.current.document.title = props.headerTitle
             // Append container
             const currentWindow = newWindow.current;
 
             copyStyles(document, newWindow.current?.document)
-            currentWindow.onbeforeunload = () => {
-                setPopOut(false);
-            }
 
-            const curWindow = newWindow.current;
+
             setReady(true)
-            return () => curWindow.close();
+            return () => newWindow.current.close();
         } else {
             newWindow.current?.close()
         }
@@ -414,7 +421,7 @@ export const MoorhenDraggableModalBase = (props: {
         });
     }
     return <>
-        {ready && popOut ? createPortal(
+        {popOut && newWindow.current !== null ? createPortal(
                 getContent(modalIdRef, dispatch, focusHierarchy, draggableNodeRef, props, opacity, currentZIndex, setOpacity, transparentModalsOnMouseOut, setPopOut, popOut, setCollapse, collapse, handleResizeStop, handleStart, resizeNodeRef)
                 , newWindow.current?.document.body) :
             getDraggable(draggableNodeRef, props, position, handleDrag, handleDragStop, handleStart, modalIdRef, dispatch, focusHierarchy, opacity, currentZIndex, setOpacity, transparentModalsOnMouseOut, setCollapse, collapse, handleResizeStop, popOut, setPopOut, resizeNodeRef)
