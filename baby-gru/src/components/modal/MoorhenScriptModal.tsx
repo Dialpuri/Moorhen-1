@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { PlayArrowOutlined } from "@mui/icons-material";
 import { Button } from "react-bootstrap";
 import { highlight, languages } from 'prismjs/components/prism-core';
@@ -11,14 +11,14 @@ import 'prismjs/themes/prism.css';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import { useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx } from "../../utils/utils";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenScriptModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
-    code?: string;
+    store: ToolkitStore;
 }) => {
 
     const [code, setCode] = useState<string>("")
@@ -31,7 +31,7 @@ export const MoorhenScriptModal = (props: {
 
     const handleScriptExe = useCallback(async () => {
         try {
-            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, molecules, maps)
+            const scriptApi = new MoorhenScriptApi(props.commandCentre, props.glRef, props.store, molecules, maps)
             scriptApi.exe(code)
         }
         catch (err) {
@@ -39,14 +39,8 @@ export const MoorhenScriptModal = (props: {
         }
     }, [code, props.glRef, maps, molecules])
     
-    useEffect(() => {
-        if (props.code) {
-            setCode(props.code)
-        }
-    }, [])
-
     return <MoorhenDraggableModalBase
-                modalId="script-modal"
+                modalId={modalKeys.SCRIPTING}
                 left={width / 5}
                 top={height / 6}
                 headerTitle="Interactive scripting"

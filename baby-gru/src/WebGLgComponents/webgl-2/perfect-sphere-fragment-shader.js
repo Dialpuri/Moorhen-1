@@ -1,5 +1,9 @@
 var perfect_sphere_fragment_shader_source = `#version 300 es\n
+
     precision mediump float;
+
+    vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
+
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
@@ -8,8 +12,6 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     uniform float fog_end;
     uniform float fog_start;
-
-    uniform sampler2D uSampler;
 
     uniform vec4 clipPlane0;
     uniform vec4 clipPlane1;
@@ -46,6 +48,9 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
     uniform bool clipCap;
 
+    uniform int peelNumber;
+    uniform sampler2D depthPeelSamplers;
+
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
@@ -63,6 +68,7 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
     }
 
     void main(void) {
+
       float silly_scale = 0.7071067811865475;
       float x = 2.0*(vTexture.x-.5);
       float y = -2.0*(vTexture.y-.5);
@@ -80,6 +86,15 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
       pos.z += silly_scale*z*size_v;
       pos = projMatrix * pos;
       gl_FragDepth = (pos.z / pos.w + 1.0) / 2.0;
+
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          float max_depth;
+          max_depth = texture(depthPeelSamplers,tex_coord).r;
+          if(gl_FragDepth <= max_depth || abs(gl_FragDepth - max_depth)<1e-6 ) {
+              discard;
+          }
+      }
 
       float clipd;
       float clipd_back;
@@ -154,7 +169,12 @@ var perfect_sphere_fragment_shader_source = `#version 300 es\n
 
       color *= occ;
       if(doEdgeDetect){
-          float edge = texture(edgeDetectMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
+
+          vec2 resolution;
+          resolution.x = 1.0/xSSAOScaling;
+          resolution.y = 1.0/ySSAOScaling;
+          float edge = fxaa(edgeDetectMap, gl_FragCoord.xy, resolution).x;
+
           color *= edge;
       }
       color.a = vColor.a;

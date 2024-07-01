@@ -23,10 +23,10 @@
 #include <cctype>
 #include <gemmi/mmdb.hpp>
 
-#include "kmeans.h"
-#include "agglomerative.h"
-#include "birch.h"
-#include "pae_igraph.h"
+#include "slicendice_cpp/kmeans.h"
+#include "slicendice_cpp/agglomerative.h"
+#include "slicendice_cpp/birch.h"
+#include "slicendice_cpp/pae_igraph.h"
 #include "Eigen/Dense"
 
 #include <math.h>
@@ -49,7 +49,7 @@
 #include "coot-utils/vertex.hh"
 #include "coot-utils/coot-map-utils.hh"
 
-#include "mmdb_manager.h"
+#include "mmdb2/mmdb_manager.h"
 #include "clipper/core/ramachandran.h"
 #include "clipper/clipper-ccp4.h"
 
@@ -404,17 +404,40 @@ class molecules_container_js : public molecules_container_t {
             return "";
         }
 
-        int read_pdb_string(const std::string &pdb_string, const std::string &molecule_name) {
-            std::string file_name = generate_rand_str(32);
-            if (pdb_string.find("data_") == 0) {
-                file_name += ".mmcif";
-            } else {
-                file_name += ".pdb";
+        std::string guess_coord_format(const std::string &file_contents) {
+            char *c_data = (char *)file_contents.c_str();
+            size_t size = file_contents.length();
+            const char* end = c_data + size;
+            
+            int coor_format = int(gemmi::coor_format_from_content(c_data, end));
+
+            std::string result;
+            if (coor_format == 0) {
+                result = "unk";
+            } else if (coor_format == 1) {
+                result = "unk";
+            } else if (coor_format == 2) {
+                result = "pdb";
+            } else if (coor_format == 3) {
+                result = "mmcif";
+            } else if (coor_format == 4) {
+                result = "mmjson";
+            } else if (coor_format == 5) {
+                result = "xml";
             }
+
+            return result;
+        }
+
+        std::pair<int, std::string> read_coords_string(const std::string &pdb_string, const std::string &molecule_name) {
+            std::string file_name = generate_rand_str(32);
+            std::string coordFormat = guess_coord_format(pdb_string);
+            file_name += "." + coordFormat;
             write_text_file(file_name, pdb_string);
             const int imol = molecules_container_t::read_pdb(file_name);
             remove_file(file_name);
-            return imol;
+            std::pair<int, std::string> result(imol, coordFormat);
+            return result;
         }
 
         int read_dictionary_string (const std::string &dictionary_string, const int &associated_imol) {
@@ -664,6 +687,24 @@ void setUint32ArrayFromVector(const std::vector<unsigned> &uintArray, const emsc
     v.call<void>("set", view);
 }
 
+void getTextureArray(const texture_as_floats_t &m, const emscripten::val &v){
+    const auto &image_data = m.image_data;
+    const auto &width = m.width;
+    const auto &height = m.height;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(width*height);
+
+    auto s = width*height;
+
+    for(int i=0;i<s;i++){
+        floatArray.push_back(image_data[i]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
 void getPositionsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscripten::val &v){
     const auto &vertices = m.vertices;
 
@@ -690,6 +731,23 @@ void getReversedNormalsFromSimpleMesh2(const coot::simple_mesh_t &m, const emscr
         floatArray.push_back(-v.normal[0]);
         floatArray.push_back(-v.normal[1]);
         floatArray.push_back(-v.normal[2]);
+    }
+
+    setFloat32ArrayFromVector(floatArray,v);
+
+}
+
+void getReversedNormalsFromSimpleMesh3(const coot::simple_mesh_t &m, const emscripten::val &v){
+
+    const auto &vertices = m.vertices;
+
+    std::vector<float> floatArray;
+    floatArray.reserve(vertices.size()*3);
+
+    for(const auto &v : vertices){
+        floatArray.push_back(v.normal[0]);
+        floatArray.push_back(v.normal[1]);
+        floatArray.push_back(v.normal[2]);
     }
 
     setFloat32ArrayFromVector(floatArray,v);
@@ -964,6 +1022,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
     function("getReversedNormalsFromSimpleMesh2", &getReversedNormalsFromSimpleMesh2);
+    function("getReversedNormalsFromSimpleMesh3", &getReversedNormalsFromSimpleMesh3);
     function("getNormalsFromSimpleMesh2", &getNormalsFromSimpleMesh2);
     function("getColoursFromSimpleMesh2", &getColoursFromSimpleMesh2);
     function("getPositionsFromSimpleMesh", &getPositionsFromSimpleMesh);
@@ -976,6 +1035,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     function("getLineIndicesFromSimpleMesh2", &getLineIndicesFromSimpleMesh2);
     function("getPermutedTriangleIndicesFromSimpleMesh2", &getPermutedTriangleIndicesFromSimpleMesh2);
     function("getTriangleIndicesFromSimpleMesh2", &getTriangleIndicesFromSimpleMesh2);
+    function("getTextureArray", &getTextureArray);
     class_<clipper::Coord_orth>("Coord_orth")
     .constructor<const clipper::ftype&, const clipper::ftype&, const clipper::ftype&>()
     .function("x", &clipper::Coord_orth::x)
@@ -1189,6 +1249,15 @@ EMSCRIPTEN_BINDINGS(my_module) {
     ;
     class_<molecules_container_t>("molecules_container_t")
     .constructor<bool>()
+    .function("M2T_updateIntParameter", &molecules_container_t::M2T_updateIntParameter)
+    .function("M2T_updateFloatParameter", &molecules_container_t::M2T_updateFloatParameter)
+    .function("clear_lsq_matches", &molecules_container_t::clear_lsq_matches)
+    .function("add_lsq_superpose_match", &molecules_container_t::add_lsq_superpose_match)
+    .function("lsq_superpose", &molecules_container_t::lsq_superpose)
+    .function("new_molecule", &molecules_container_t::new_molecule)
+    .function("new_molecule", &molecules_container_t::new_molecule)
+    .function("get_header_info", &molecules_container_t::get_header_info)
+    .function("copy_dictionary", &molecules_container_t::copy_dictionary)
     .function("end_delete_closed_molecules", &molecules_container_t::end_delete_closed_molecules)
     .function("make_ensemble", &molecules_container_t::make_ensemble)
     .function("match_ligand_torsions_and_position_using_cid", &molecules_container_t::match_ligand_torsions_and_position_using_cid)
@@ -1246,6 +1315,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("set_show_timings",&molecules_container_t::set_show_timings)
     .function("get_molecule_name",&molecules_container_t::get_molecule_name)
     .function("non_standard_residue_types_in_model",&molecules_container_t::non_standard_residue_types_in_model)
+    .function("get_map_mean",&molecules_container_t::get_map_mean)
     .function("get_map_rmsd_approx",&molecules_container_t::get_map_rmsd_approx)
     .function("set_draw_missing_residue_loops",&molecules_container_t::set_draw_missing_residue_loops)
     .function("set_make_backups",&molecules_container_t::set_make_backups)
@@ -1349,6 +1419,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("associate_data_mtz_file_with_map",&molecules_container_t::associate_data_mtz_file_with_map)
     .function("connect_updating_maps",&molecules_container_t::connect_updating_maps)
     .function("get_diff_diff_map_peaks", &molecules_container_t::get_diff_diff_map_peaks)
+    .function("export_molecular_represenation_as_gltf", &molecules_container_t::export_molecular_represenation_as_gltf)
     .function("export_model_molecule_as_gltf", &molecules_container_t::export_model_molecule_as_gltf)
     .function("export_map_molecule_as_gltf", &molecules_container_t::export_map_molecule_as_gltf)
     .function("residues_with_missing_atoms",&molecules_container_t::residues_with_missing_atoms)
@@ -1387,6 +1458,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("sharpen_blur_map_with_resample",&molecules_container_t::sharpen_blur_map_with_resample)
     .function("find_water_baddies",&molecules_container_t::find_water_baddies)
     .function("get_gphl_chem_comp_info",&molecules_container_t::get_gphl_chem_comp_info)
+    .function("get_map_section_texture", &molecules_container_t::get_map_section_texture)
     .property("use_gemmi", &molecules_container_t::use_gemmi)
     ;
     class_<molecules_container_js, base<molecules_container_t>>("molecules_container_js")
@@ -1407,12 +1479,20 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
     .function("get_molecule_atoms", &molecules_container_js::get_molecule_atoms)
-    .function("read_pdb_string", &molecules_container_js::read_pdb_string)
+    .function("read_coords_string", &molecules_container_js::read_coords_string)
     .function("smiles_to_pdb", &molecules_container_js::smiles_to_pdb)
     .function("mol_text_to_pdb", &molecules_container_js::mol_text_to_pdb)
     .function("replace_molecule_by_model_from_string", &molecules_container_js::replace_molecule_by_model_from_string)
     .function("read_dictionary_string", &molecules_container_js::read_dictionary_string)
     .function("slicendice_slice", &molecules_container_js::slicendice_slice)
+    ;
+    value_object<texture_as_floats_t>("texture_as_floats_t")
+    .field("width", &texture_as_floats_t::width)
+    .field("height", &texture_as_floats_t::height)
+    .field("x_size", &texture_as_floats_t::x_size)
+    .field("y_size", &texture_as_floats_t::y_size)
+    .field("z_position", &texture_as_floats_t::z_position)
+    //.field("image_data", &texture_as_floats_t::image_data)
     ;
     value_object<molecules_container_t::fit_ligand_info_t>("fit_ligand_info_t")
     .field("imol", &molecules_container_t::fit_ligand_info_t::imol)
@@ -1585,6 +1665,20 @@ EMSCRIPTEN_BINDINGS(my_module) {
         .element(emscripten::index<2>())
     ;
 
+    value_array<std::array<float, 4>>("array_native_float_4")
+        .element(emscripten::index<0>())
+        .element(emscripten::index<1>())
+        .element(emscripten::index<2>())
+        .element(emscripten::index<3>())
+    ;
+
+    value_object<moorhen::header_info_t>("moorhen_header_info_t")
+        .field("title", &moorhen::header_info_t::title)
+        .field("journal_lines", &moorhen::header_info_t::journal_lines)
+        .field("author_lines", &moorhen::header_info_t::author_lines)
+        .field("compound_lines", &moorhen::header_info_t::compound_lines)
+    ;
+
     value_object<coot::molecule_t::histogram_info_t>("histogram_info_t")
         .field("base", &coot::molecule_t::histogram_info_t::base)
         .field("bin_width", &coot::molecule_t::histogram_info_t::bin_width)
@@ -1631,6 +1725,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<coot::Cartesian>("VectorCootCartesian");
     register_vector<std::vector<coot::Cartesian>>("VectorVectorCootCartesian");
     register_map<unsigned int, std::array<float, 3>>("MapIntFloat3");
+    register_map<unsigned int, std::array<float, 4>>("MapIntFloat4");
     register_map<coot::residue_spec_t, coot::util::density_correlation_stats_info_t>("Map_residue_spec_t_density_correlation_stats_info_t");
     register_vector<std::array<float, 16>>("VectorArrayFloat16");
     register_vector<std::pair<clipper::Coord_orth, float>>("VectorClipperCoordOrth_float_pair");

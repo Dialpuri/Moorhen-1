@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import { Row, Button, Card, Col, OverlayTrigger, Tooltip, Form, FormSelect } from "react-bootstrap";
 import { ArrowUpwardOutlined, ArrowDownwardOutlined, DeleteOutlined, GrainOutlined } from '@mui/icons-material';
-import { HexColorInput, RgbColorPicker } from "react-colorful";
-import { rgbToHex } from "../../utils/MoorhenUtils";
+import { HexAlphaColorPicker, HexColorInput, RgbColorPicker } from "react-colorful";
+import { rgbToHex } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
-import { Popover, hexToRgb } from "@mui/material";
+import { Popover } from "@mui/material";
 import { useSelector } from "react-redux";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 const ColourSwatch = (props: {
     rule: moorhen.ColourRule;
@@ -17,14 +18,7 @@ const ColourSwatch = (props: {
 
     const { rule, applyColourChange } = props
     
-    let [r, g, b]: number[] = []
-    if (!rule.isMultiColourRule) {
-        [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-    } else {
-        [r, g, b] = [100, 100, 100]
-    }
-
-    const [rgb, setRgb] = useState<{r: number, g: number, b: number}>({r, g, b})
+    const [hex, setHex] = useState<string>(rule.color)
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
 
     const handleClick = () => {
@@ -32,6 +26,16 @@ const ColourSwatch = (props: {
             rule.color = newHexValueRef.current
             if (!rule.isMultiColourRule) rule.args[1] = rule.color 
             applyColourChange()
+        }
+        catch (err) {
+            console.log('err', err)
+        }
+    }
+
+    const handleColorChange = (color: string) => {
+        try {
+            newHexValueRef.current = color
+            setHex(color)
         }
         catch (err) {
             console.log('err', err)
@@ -64,17 +68,10 @@ const ColourSwatch = (props: {
             }}
         >
         <div style={{ padding: '0.5rem', width: '100%', margin: 0, justifyContent: 'center', display: 'flex', flexDirection: 'column'}}>
-            <RgbColorPicker color={rgb} onChange={(color: { r: number; g: number; b: number; }) => {
-                newHexValueRef.current = rgbToHex(color.r, color.g, color.b)
-                setRgb(color)
-            }}/>
+            <HexAlphaColorPicker color={hex} onChange={handleColorChange}/>
             <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
                 <div className="moorhen-hex-input-decorator">#</div>
-                <HexColorInput className="moorhen-hex-input" color={rgbToHex(rgb.r, rgb.g, rgb.b)} onChange={(hex) => {
-                    const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                    newHexValueRef.current = rgbToHex(r, g, b)
-                    setRgb({r, g, b})
-                }}/>
+                <HexColorInput className="moorhen-hex-input" color={hex} onChange={handleColorChange}/>
             </div>
             <Button style={{marginTop: '0.2rem'}} onClick={handleClick}>
                 Apply
@@ -84,16 +81,17 @@ const ColourSwatch = (props: {
     </>
 }
 
-const NcsColourSwatch = (props: {
+export const NcsColourSwatch = (props: {
     rule: moorhen.ColourRule;
     applyColourChange: () => void;
+    style?: {[key: string]: string}
 }) => {
 
     const ncsSwatchRef = useRef(null)
     const newNcsHexValueRef = useRef<string>('')
     const ncsCopySelectRef = useRef<null | HTMLSelectElement>(null)
 
-    const [rgb, setRgb] = useState<{r: number, g: number, b: number}>({r: 100, g: 100, b: 100})
+    const [hex, setHex] = useState<string>("#ffffff")
     const [ncsCopyValue, setNcsCopyValue] = useState<string>('')
     const [showColourPicker, setShowColourPicker] = useState<boolean>(false)
 
@@ -116,9 +114,8 @@ const NcsColourSwatch = (props: {
         <GrainOutlined ref={ncsSwatchRef} onClick={() => {
             setShowColourPicker(true)
             const hex = (rule.args[0] as string).split('|')[0].split('^')[1]
-            const [_r, _g, _b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-            setRgb({r: _r, g: _g, b: _b})
-        }} style={{ cursor: 'pointer', height:'23px', width:'23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px' }}/>
+            setHex(hex)
+        }} style={props.style ? props.style : { cursor: 'pointer', height:'23px', width:'23px', marginLeft: '0.5rem', marginRight: '0.5rem', borderStyle: 'solid', borderColor: '#ced4da', borderWidth: '3px', borderRadius: '8px' }}/>
         <Popover 
             anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
             transformOrigin={{ vertical: 'top', horizontal: 'left' }}
@@ -137,8 +134,7 @@ const NcsColourSwatch = (props: {
                     setNcsCopyValue(evt.target.value)
                     const chainNames = JSON.parse(evt.target.value)
                     const hex = (rule.args[0] as string).split('|').find(item => item.includes(chainNames[0]))?.split('^')[1]
-                    const [_r, _g, _b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                    setRgb({r: _r, g: _g, b: _b})
+                    setHex(hex)
                 }}>
                     {[...new Set((rule.args[0] as string).split('|').map(item => item.split('^')[1]))].map((hex, index) => {
                         const chainNames = JSON.stringify((rule.args[0] as string).split('|').filter(item => item.includes(hex)).map(item => item.split('^')[0]))
@@ -146,16 +142,15 @@ const NcsColourSwatch = (props: {
                     })}
                 </FormSelect>
             </Form.Group>
-            <RgbColorPicker color={rgb} onChange={(color: { r: number; g: number; b: number; }) => {
-                newNcsHexValueRef.current = rgbToHex(color.r, color.g, color.b)
-                setRgb(color)
+            <HexAlphaColorPicker color={hex} onChange={(color: string) => {
+                newNcsHexValueRef.current = color
+                setHex(color)
             }}/>
             <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
                 <div className="moorhen-hex-input-decorator">#</div>
-                <HexColorInput className="moorhen-hex-input" color={rgbToHex(rgb.r, rgb.g, rgb.b)} onChange={(hex) => {
-                    const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-                    newNcsHexValueRef.current = rgbToHex(r, g, b)
-                    setRgb({r, g, b})
+                <HexColorInput className="moorhen-hex-input" color={hex} onChange={(hex) => {
+                    newNcsHexValueRef.current = hex
+                    setHex(hex)
                 }}/>
             </div>
             <Button style={{marginTop: '0.2rem'}} onClick={applyNcsColourChange}>
@@ -180,11 +175,6 @@ export const MoorhenColourRuleCard = (props: {
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const { index, molecule, rule, urlPrefix, setRuleList } = props
-    
-    let [r, g, b]: number[] = []
-    if (!rule.isMultiColourRule) {
-        [r, g, b] = hexToRgb(rule.color).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
-    }
     
     const redrawIfDirty = () => {
         if (isDirty.current) {

@@ -7,7 +7,7 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/baby-gru/wasm/moorhen')
+const createCootModule = require('../../public/baby-gru/moorhen')
 let cootModule;
 
 const mockMonomerLibraryPath = "https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/"
@@ -194,6 +194,14 @@ describe("Testing MoorhenMap", () => {
         await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
         const rmsd = await map.fetchMapRmsd()
         expect(rmsd).toBeCloseTo(0.35, 1)
+    })
+
+    test("Test fetchMapMean", async () => {
+        const fileUrl = path.join(__dirname, '..', 'test_data', '5a3h_sigmaa.mtz')
+        const map = new MoorhenMap(commandCentre, glRef)
+        await map.loadToCootFromMtzURL(fileUrl, 'map-test', { F: "FWT", PHI: "PHWT", isDifference: false, useWeight: false, calcStructFact: false })
+        const mean = await map.fetchMapMean()
+        expect(mean).toBeCloseTo(2.18e-10, 10)
     })
 
     test("Test getMapWeight", async () => {

@@ -50,6 +50,18 @@ export namespace libcootApi {
         Fractional: { new(x: number, y: number, z: number): gemmi.Fractional };
         cifDocument: { new(): gemmi.cifDocument };
     }
+    type headerInfo = {
+        title: string;
+        journal_lines: emscriptem.vector<string>;
+        author_lines: emscriptem.vector<string>;
+        compound_lines: emscriptem.vector<string>;
+    }
+    type headerInfoJS = {
+        title: string;
+        journal_lines: string[];
+        author_lines: string[];
+        compound_lines: string[];
+    }
     type SequenceResInfo = {
         resNum: number;
         resCode: string;
@@ -429,10 +441,29 @@ export namespace libcootApi {
         psi: number;
         is_pre_pro: boolean;
     }
+    type textureAsFloats = {
+        width: number;
+        height: number;
+        x_size: number;
+        y_size: number;
+        z_position: number;
+    }
+    type textureAsFloatsJS = {
+        width: number;
+        height: number;
+        x_size: number;
+        y_size: number;
+        z_position: number;
+        image_data: Float32Array;
+    }
     type fitLigandInfo = {
         imol: number;
         cluster_idx: number;
         ligand_idx: number;
+    }
+    type compoundInfo = {
+        name: string;
+        three_letter_code: string;
     }
     type CootModule = {
         SmilesToPDB(arg0: string, arg1: string, arg2: number, arg3: number): PairType<string, string>;
@@ -447,9 +478,11 @@ export namespace libcootApi {
         getNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getReversedNormalsFromSimpleMesh( arg0: any ): Float32Array;
         getColoursFromSimpleMesh( arg0: any ): Float32Array;
+        getTextureArray( arg0: any, arg1: any ): void;
         getPositionsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
         getReversedNormalsFromSimpleMesh2( arg0: any, arg1: any ): void;
+        getReversedNormalsFromSimpleMesh3( arg0: any, arg1: any ): void;
         getColoursFromSimpleMesh2( arg0: any, arg1: any ): void;
         getLineIndicesFromSimpleMesh( arg0: any ): Uint32Array;
         getPermutedTriangleIndicesFromSimpleMesh( arg0: any ): Uint32Array;
@@ -458,12 +491,14 @@ export namespace libcootApi {
         getPermutedTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
         getTriangleIndicesFromSimpleMesh2( arg0: any, arg1: any ): void;
         getRamachandranData(arg0: string, arg1: string): emscriptem.vector<RamaData>;
-        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>
+        validate(arg0: string, arg1: string): emscriptem.vector<PrivateerResultsEntry>;
+        parse_mon_lib_list_cif(arg0: string): emscriptem.vector<compoundInfo>;
         molecules_container_js: { new(verbose: boolean): MoleculesContainerJS };
         Vectormoved_residue_t: { new(): emscriptem.vector<MovedResidueT>};
         moved_residue_t: { new(arg0: string, arg1: number, arg2: string): MovedResidueT};
         moved_atom_t: { new(arg0: string, arg1: string, arg2: number, arg3: number, arg4: number, arg5: number): MovedAtomT};
         MapIntFloat3: { new(): emscriptem.map<[number, number, number], number>};
+        MapIntFloat4: { new(): emscriptem.map<[number, number, number, number], number>};
         VectorStringUInt_pair: { new(): emscriptem.vector<{ first: string, second: number }>};
     }
     interface MoleculesContainerJS {
@@ -471,6 +506,7 @@ export namespace libcootApi {
         set_refinement_is_verbose(arg0: boolean): void;
         set_use_gemmi(arg0: boolean): void;
         get_use_gemmi(): boolean;
+        export_molecular_represenation_as_gltf(imol: number, cid: string, colourScheme: string, style: string, fileName: string): void;
         export_model_molecule_as_gltf(imol: number, cid: string, mode: string, isDark: boolean, bondWidth: number, atomRadius: number, bondSmoothness: number, drawHydrogens: boolean, drawMissingResidues: boolean, fileName: string): void;
         export_map_molecule_as_gltf(imol: number, x: number, y: number, z: number, radius: number, contourLevel: number, fileName: string): void;
         set_max_number_of_threads(arg0: number): void;
@@ -483,7 +519,7 @@ export namespace libcootApi {
         set_map_sampling_rate(arg0: number): void;
         fill_rotamer_probability_tables(): void;
         set_user_defined_atom_colour_by_selection(imol: number, indexedResiduesVec: emscriptem.vector<{ first: string; second: number; }>, nonCarbon: boolean): void;
-        set_user_defined_bond_colours(imol: number, colourMap: emscriptem.map<[number, number, number], number>): void;
+        set_user_defined_bond_colours(imol: number, colourMap: emscriptem.map<[number, number, number, number], number>): void;
         read_ccp4_map(arg0: string, arg2: boolean): number;
         associate_data_mtz_file_with_map(arg0: number, arg1: string, arg2: string, arg3: string, arg5: string): void;
         read_mtz(arg0: string, arg1: string, arg2: string, arg3: string, arg4: boolean, arg5: boolean): number;

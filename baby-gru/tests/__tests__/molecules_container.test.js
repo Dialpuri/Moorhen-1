@@ -3,7 +3,7 @@ jest.setTimeout(40000)
 
 const fs = require('fs')
 const path = require('path')
-const createCootModule = require('../../public/baby-gru/wasm/moorhen')
+const createCootModule = require('../../public/baby-gru/moorhen')
 
 let cootModule;
 let cleanUpVariables = []
@@ -91,7 +91,13 @@ describe('Testing molecules_container_js', () => {
 
     test('Test glycoblocks', async () => {
         const coordMolNo = molecules_container.read_pdb('./5fjj.pdb')
-        const glyco_mesh = molecules_container.DrawGlycoBlocks(coordMolNo,"/")
+        const glycoMeshData = molecules_container.DrawGlycoBlocks(coordMolNo, "//")
+        const geom = glycoMeshData.geom
+        const meshData = geom.get(0)
+        const triangles = meshData.triangles
+        
+        expect(triangles.size()).toBeGreaterThan(10)
+        cleanUpVariables.push(triangles, meshData, geom)
     })
 
     test('Test copy fragment', () => {
@@ -100,6 +106,32 @@ describe('Testing molecules_container_js', () => {
         const atomCount = molecules_container.get_number_of_atoms(coordMolNo_2)
         expect(coordMolNo_2).not.toBe(-1)
         expect(atomCount).toBe(14)
+    })
+
+    test("Test get_svg_for_residue_type", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.pdb')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', coordMolNo)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
+    })
+
+    test("Test get_svg_for_residue_type -- any molecule", () => {
+        const coordMolNo = molecules_container.read_pdb('./5a3h.mmcif')
+        
+        const svg_1 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_1).toBe("No dictionary for LZA")
+
+        const result_import_dict = molecules_container.import_cif_dictionary('./LZA.cif', -999999)
+        expect(result_import_dict).toBe(1)
+        
+        const svg_2 = molecules_container.get_svg_for_residue_type(coordMolNo, "LZA", false, false)
+        expect(svg_2).not.toBe("No dictionary for LZA")
     })
 
     test('Test fit_ligand_right_here 1', () => {
@@ -334,7 +366,7 @@ describe('Testing molecules_container_js', () => {
         cleanUpVariables.push(codes)
     })
 
-    test.skip('Test Auto-fit rotamer', () => {
+    test.skip('Test auto_fit_rotamer', () => {
         molecules_container.geometry_init_standard()
         const imol = molecules_container.read_pdb('./tm-A.pdb')
         const imol_map = molecules_container.read_mtz("./rnasa-1.8-all_refmac1.mtz", "FWT", "PHWT", "W", false, false)
@@ -350,6 +382,30 @@ describe('Testing molecules_container_js', () => {
         const d = Math.sqrt(dd)
         expect(d).toBeCloseTo(7.28975, 5)
         cleanUpVariables.push(res, resSpec)
+    })
+
+    test.skip("Test change rotamer", () => {
+        molecules_container.geometry_init_standard()
+        const imol_molecule = molecules_container.read_pdb('./5a3h.pdb')
+        
+        // Create a fragment and change rotamer
+        const imol_fragment = molecules_container.copy_fragment_using_cid(imol_molecule, '//A/179')
+        molecules_container.change_to_next_rotamer(imol_fragment, '//A/179', '')
+        
+        // Get the OG atom for that new rotamer (still in the fragment)
+        const resSpec = new cootModule.residue_spec_t("A", 179, "");
+        const res_fragment = molecules_container.get_residue(imol_fragment, resSpec)
+        const atom_fragment = res_fragment.GetAtom(5)
+
+        // Replace fragment back into the molecule and get new OG atom
+        molecules_container.replace_fragment(imol_molecule, imol_fragment, '//A/179')
+        const res_new = molecules_container.get_residue(imol_molecule, resSpec)
+        const atom_new = res_new.GetAtom(5)
+
+        // This fails...
+        expect(atom_new.x).toBe(atom_fragment.x)
+        expect(atom_new.y).toBe(atom_fragment.y)
+        expect(atom_new.z).toBe(atom_fragment.z)
     })
 
     test('Test Rama mesh', () => {
@@ -512,6 +568,73 @@ describe('Testing molecules_container_js', () => {
         expect(simpleMesh.triangles.size()).toBeGreaterThan(100)
     })
 
+    test.skip("Test import ligands with same name and animated refinement", () => {
+        const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
+        const coordMolNo_2 = molecules_container.read_pdb('./5fjj.pdb')
+        const mapMolNo = molecules_container.read_mtz('./5a3h_sigmaa.mtz', 'FWT', 'PHWT', "", false, false)
+
+        molecules_container.import_cif_dictionary('./benzene.cif', coordMolNo_1)
+        molecules_container.import_cif_dictionary('./nitrobenzene.cif', coordMolNo_2)
+
+        const coords = [0, 0, 0]
+        const tlc = 'LIG'
+        
+        const ligandMolNo_1 = molecules_container.get_monomer_and_position_at(tlc, coordMolNo_1, ...coords)
+        const merge_info_1 = molecules_container.merge_molecules(coordMolNo_1, ligandMolNo_1.toString())
+        expect(merge_info_1.second.size()).toBe(1)
+
+        const ligandMolNo_2 = molecules_container.get_monomer_and_position_at(tlc, coordMolNo_2, ...coords)
+        const merge_info_2 = molecules_container.merge_molecules(coordMolNo_2, ligandMolNo_2.toString())
+        expect(merge_info_2.second.size()).toBe(1)
+
+        const copyMolNo_1 = molecules_container.copy_fragment_for_refinement_using_cid(coordMolNo_1, '/1/C/1/*')
+        molecules_container.init_refinement_of_molecule_as_fragment_based_on_reference(copyMolNo_1, coordMolNo_1, mapMolNo)
+        molecules_container.copy_dictionary('LIG', coordMolNo_1, copyMolNo_1)
+        let result_1 = []
+        const refine_result_1 = molecules_container.refine(copyMolNo_1, 5000)
+        const instanced_mesh_1 = refine_result_1.second
+        const geom_vec_1 = instanced_mesh_1.geom
+        const geom_vec_1_size = geom_vec_1.size()
+        for (let i = 0; i < geom_vec_1_size; i++) {
+            const geom = geom_vec_1.get(i)
+            const inst_data_B_vec = geom.instancing_data_B
+            const inst_data_B_vec_size = inst_data_B_vec.size()
+            for (let j = 0; j < inst_data_B_vec_size; j++) {
+                const inst_data_B = inst_data_B_vec.get(j)
+                result_1.push(inst_data_B.size)
+            }
+            cleanUpVariables.push(geom, inst_data_B_vec)
+        }
+        molecules_container.clear_refinement(coordMolNo_1)
+
+        const copyMolNo_2 = molecules_container.copy_fragment_for_refinement_using_cid(coordMolNo_2, '/1/j/1/*')
+        molecules_container.init_refinement_of_molecule_as_fragment_based_on_reference(copyMolNo_2, coordMolNo_2, mapMolNo)
+        molecules_container.copy_dictionary('LIG', coordMolNo_2, copyMolNo_2)
+        let result_2 = []
+        const refine_result_2 = molecules_container.refine(copyMolNo_2, 5000)
+        const instanced_mesh_2 = refine_result_2.second
+        const geom_vec_2 = instanced_mesh_2.geom
+        const geom_vec_2_size = geom_vec_2.size()
+        for (let i = 0; i < geom_vec_2_size; i++) {
+            const geom = geom_vec_2.get(i)
+            const inst_data_B_vec = geom.instancing_data_B
+            const inst_data_B_vec_size = inst_data_B_vec.size()
+            for (let j = 0; j < inst_data_B_vec_size; j++) {
+                const inst_data_B = inst_data_B_vec.get(j)
+                result_2.push(inst_data_B.size)
+            }
+            cleanUpVariables.push(geom, inst_data_B_vec)
+        }
+        molecules_container.clear_refinement(coordMolNo_2)
+
+        expect(result_1).toHaveLength(15)
+        expect(result_2).toHaveLength(22)
+        expect(result_1.every(size => size <= 2.25)).toBeTruthy()
+        expect(result_2.every(size => size <= 2.25)).toBeTruthy()
+
+        cleanUpVariables.push(instanced_mesh_1, instanced_mesh_2, geom_vec_1, geom_vec_2)
+    })
+
     test("Test smiles_to_pdb", () => {
         const result_1 = molecules_container.smiles_to_pdb('c1ccccc1', 'LIG', 10, 100)
         const fileContents_1 = fs.readFileSync(path.join(__dirname, '..', 'test_data', 'benzene.cif'), { encoding: 'utf8', flag: 'r' })
@@ -540,24 +663,26 @@ describe('Testing molecules_container_js', () => {
         expect(pdbString).toHaveLength(297616)
     })
 
-    test("Test read_pdb_string pdb-format", () => {
+    test("Test read_coords_string pdb-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "pdb")
         expect(pdbString_1).toHaveLength(258719)
-        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
-        expect(coordMolNo_2).toBe(1)
-        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "pdb")
+        const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2.first).toBe(1)
+        expect(coordMolNo_2.second).toBe("pdb")
+        const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2.first, "pdb")
         expect(pdbString_2).toBe(pdbString_1)
     })
 
-    test("Test read_pdb_string mmcif-format", () => {
+    test("Test read_coords_string mmcif-format", () => {
         const coordMolNo_1 = molecules_container.read_pdb('./5a3h.pdb')
         const pdbString_1  = molecules_container.get_molecule_atoms(coordMolNo_1, "mmcif")
         expect(pdbString_1).toHaveLength(297616)
-        const coordMolNo_2 = molecules_container.read_pdb_string(pdbString_1, "mol-name")
-        expect(coordMolNo_2).toBe(1)
+        const coordMolNo_2 = molecules_container.read_coords_string(pdbString_1, "mol-name")
+        expect(coordMolNo_2.first).toBe(1)
+        expect(coordMolNo_2.second).toBe("mmcif")
         // For some reason this fails, probably a coot thing
-        // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2, "mmcif")
+        // const pdbString_2  = molecules_container.get_molecule_atoms(coordMolNo_2.first, "mmcif")
         // expect(pdbString_2).toBe(pdbString_1)
     })
 
@@ -1193,14 +1318,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A/12-15", rgb: [1, 0, 0] }
+            { cid: "//A/12-15", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1263,14 +1388,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A/12-15", rgb: [1, 0, 0] }
+            { cid: "//A/12-15", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1332,14 +1457,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A/26-29", rgb: [1, 0, 0] }
+            { cid: "//A/26-29", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1401,14 +1526,14 @@ describe('Testing molecules_container_js', () => {
             As.delete()
         }
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
         
         const colours = [
-            { cid: "//A", rgb: [1, 0, 0] }
+            { cid: "//A", rgba: [1, 0, 0, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1593,15 +1718,15 @@ describe('Testing molecules_container_js', () => {
 
         molecules_container.delete_colour_rules(coordMolNo)
 
-        let colourMap = new cootModule.MapIntFloat3()
+        let colourMap = new cootModule.MapIntFloat4()
         let indexedResiduesVec = new cootModule.VectorStringUInt_pair()
 
         const colours = [
-            { cid: "//A", rgb: [1, 0, 0] },
-            { cid: "//B", rgb: [0, 0, 1] }            
+            { cid: "//A", rgba: [1, 0, 0, 1] },
+            { cid: "//B", rgba: [0, 0, 1, 1] }
         ]
         colours.forEach((colour, index) => {
-            colourMap.set(index + 51, colour.rgb)
+            colourMap.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec.push_back(i)
         })
@@ -1640,16 +1765,16 @@ describe('Testing molecules_container_js', () => {
         
         molecules_container.delete_colour_rules(coordMolNo)
 
-        let colourMap_2 = new cootModule.MapIntFloat3()
+        let colourMap_2 = new cootModule.MapIntFloat4()
         let indexedResiduesVec_2 = new cootModule.VectorStringUInt_pair()
 
         const colours_2 = [
-            { cid: "//A", rgb: [1, 0, 0] },
-            { cid: "//B", rgb: [0, 0, 1] },          
-            { cid: "//X", rgb: [0, 1, 0] }
+            { cid: "//A", rgba: [1, 0, 0, 1] },
+            { cid: "//B", rgba: [0, 0, 1, 1] },
+            { cid: "//X", rgba: [0, 1, 0, 1] }
         ]
         colours_2.forEach((colour, index) => {
-            colourMap_2.set(index + 51, colour.rgb)
+            colourMap_2.set(index + 51, colour.rgba)
             const i = { first: colour.cid, second: index + 51 }
             indexedResiduesVec_2.push_back(i)
         })

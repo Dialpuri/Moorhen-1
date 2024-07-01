@@ -14,42 +14,58 @@ import { MoorhenMoleculeSelect } from "./components/select/MoorhenMoleculeSelect
 import { MoorhenMapSelect } from "./components/select/MoorhenMapSelect";
 import { MoorhenSlider } from "./components/misc/MoorhenSlider";
 import { MoorhenFetchOnlineSourcesForm } from "./components/form/MoorhenFetchOnlineSourcesForm";
-import { loadSessionFromJsonString, loadSessionData, loadSessionFromProtoMessage } from "./utils/MoorhenUtils";
-import { MoorhenReduxProvider } from "./components/misc/MoorhenReduxProvider";
 import MoorhenReduxStore from "./store/MoorhenReduxStore";
 import { setDefaultBackgroundColor, setDrawCrosshairs, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap,  
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setHeight, setWidth, setIsDark, setBackgroundColor, setDrawScaleBar,
-    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale
+    setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale, resetSceneSettings
 } from './store/sceneSettingsSlice';
-import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold } from './store/backupSettingsSlice';
+import { setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, setModificationCountBackupThreshold, resetBackupSettings } from './store/backupSettingsSlice';
 import { 
-    setNotificationContent, setActiveMap, setCootInitialized, setAppTittle, 
-    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly
+    setActiveMap, setCootInitialized, setAppTittle, 
+    setUserPreferencesMounted, setDevMode, setTheme, setViewOnly, resetGeneralStates
  } from './store/generalStatesSlice';
 import { addMap, addMapList, removeMap, emptyMaps } from "./store/mapsSlice";
-import { setCursorStyle, setEnableAtomHovering, setHoveredAtom } from './store/hoveringStatesSlice';
-import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize } from './store/labelSettingsSlice';
+import { setCursorStyle, setEnableAtomHovering, setHoveredAtom, resetHoveringStates } from './store/hoveringStatesSlice';
+import { addAvailableFontList, setAtomLabelDepthMode, setGLLabelsFontFamily, setGLLabelsFontSize, resetLabelSettings } from './store/labelSettingsSlice';
 import { 
     showMap, hideMap, setPositiveMapColours, setNegativeMapColours, setMapAlpha, setMapColours, setMapRadius, 
-    setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel
+    setMapStyle, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, setDefaultMapSurface, setContourLevel, resetMapContourSettings
 } from './store/mapContourSettingsSlice';
-import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut } from './store/miscAppSettingsSlice';
-import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine } from './store/refinementSettingsSlice';
+import { setDefaultExpandDisplayCards, setTransparentModalsOnMouseOut, resetMiscAppSettings } from './store/miscAppSettingsSlice';
+import { setEnableRefineAfterMod, setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, resetRefinementSettings } from './store/refinementSettingsSlice';
 import { addMolecule, removeMolecule, emptyMolecules, addMoleculeList, showMolecule, hideMolecule, addCustomRepresentation, removeCustomRepresentation } from './store/moleculesSlice';
-import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity } from './store/mouseSettings';
-import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts } from './store/shortCutsSlice';
-import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores } from './store/moleculeMapUpdateSlice'
+import { setContourWheelSensitivityFactor, setZoomWheelSensitivityFactor, setMouseSensitivity, resetDefaultMouseSettings } from './store/mouseSettings';
+import { setShowShortcutToast, setShortcutOnHoveredAtom, setShortCuts, resetShortcutSettings } from './store/shortCutsSlice';
+import { setShowScoresToast, addMapUpdatingScore, removeMapUpdatingScore, overwriteMapUpdatingScores, resetMoleculeMapUpdates } from './store/moleculeMapUpdateSlice';
+import { resetActiveModals, focusOnModal, unFocusModal } from './store/modalsSlice';
+import { resetSharedSession } from './store/sharedSessionSlice';
+import moleculesReducer from './store/moleculesSlice';
+import mapsReducer from './store/mapsSlice';
+import mouseSettingsReducer from './store/mouseSettings';
+import backupSettingsReducer from './store/backupSettingsSlice';
+import shortcutSettingsReducer from './store/shortCutsSlice';
+import labelSettingsReducer from './store/labelSettingsSlice';
+import sceneSettingsReducer from './store/sceneSettingsSlice';
+import miscAppSettingsReducer from './store/miscAppSettingsSlice';
+import generalStatesReducer from './store/generalStatesSlice';
+import hoveringStatesReducer from './store/hoveringStatesSlice';
+import modalsReducer from './store/modalsSlice';
+import mapContourSettingsReducer from './store/mapContourSettingsSlice';
+import moleculeMapUpdateReducer from './store/moleculeMapUpdateSlice';
+import sharedSessionReducer from './store/sharedSessionSlice';
+import refinementSettingsReducer from './store/refinementSettingsSlice';
+import MoorhenStore from './store/MoorhenReduxStore';
 
 export {
     ErrorBoundary, MoorhenApp, MoorhenContainer, MoorhenTimeCapsule, MoorhenMoleculeSelect, MoorhenMolecule, MoorhenMap,
-    MoorhenCommandCentre, loadSessionFromJsonString, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenReduxProvider, 
+    MoorhenCommandCentre, MoorhenMapSelect, MoorhenDraggableModalBase, MoorhenStore,
     setDefaultBackgroundColor, setDrawCrosshairs, setDrawScaleBar, setDrawFPS, setDrawMissingLoops, setDefaultBondSmoothness,
     setDrawInteractions, setDoSSAO, setSsaoRadius, setSsaoBias, setResetClippingFogging, setClipCap, MoorhenColourRule,
     setUseOffScreenBuffers, setDoShadowDepthDebug, setDoShadow, setDoSpin, setDoOutline, setDepthBlurRadius,
     setDepthBlurDepth, setDrawAxes, setDoPerspectiveProjection, setEnableTimeCapsule, setMakeBackups, setMaxBackupCount, 
-    setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, setNotificationContent, 
+    setModificationCountBackupThreshold, setHeight, setWidth, setIsDark, setBackgroundColor, 
     setActiveMap, setCootInitialized, setAppTittle, setUserPreferencesMounted, setDevMode, setTheme, setViewOnly,
     setCursorStyle, setEnableAtomHovering, setHoveredAtom, addAvailableFontList, setAtomLabelDepthMode, 
     setGLLabelsFontFamily, setGLLabelsFontSize, setDefaultMapSamplingRate, setDefaultMapLitLines, setMapLineWidth, 
@@ -62,5 +78,10 @@ export {
     MoorhenQuerySequenceModal, MoorhenPreferences, setDoEdgeDetect, addCustomRepresentation, removeCustomRepresentation,
     setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold, setEdgeDetectDepthScale, setEdgeDetectNormalScale,
     setUseRamaRefinementRestraints, setuseTorsionRefinementRestraints, setAnimateRefine, MoorhenReduxStore, 
-    loadSessionData, loadSessionFromProtoMessage
+    moleculesReducer, mapsReducer, mouseSettingsReducer, backupSettingsReducer, unFocusModal, resetSharedSession,
+    shortcutSettingsReducer, labelSettingsReducer, sceneSettingsReducer, miscAppSettingsReducer, generalStatesReducer,
+    modalsReducer, hoveringStatesReducer, mapContourSettingsReducer, moleculeMapUpdateReducer,
+    sharedSessionReducer, refinementSettingsReducer, resetSceneSettings, resetBackupSettings, resetDefaultMouseSettings, 
+    resetGeneralStates, resetHoveringStates, resetLabelSettings, resetMapContourSettings, resetMiscAppSettings, resetMoleculeMapUpdates,
+    resetRefinementSettings, resetShortcutSettings, resetActiveModals, focusOnModal, 
 };

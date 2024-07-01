@@ -1,6 +1,6 @@
 import { forwardRef, useImperativeHandle, useEffect, useState, useRef, useCallback, useMemo, Fragment } from "react"
 import { Card, Form, Button, Col, DropdownButton, Stack, OverlayTrigger, ToggleButton, Spinner } from "react-bootstrap"
-import { doDownload, guid, rgbToHex } from '../../utils/MoorhenUtils'
+import { doDownload, rgbToHex } from '../../utils/utils'
 import { getNameLabel } from "./cardUtils"
 import { VisibilityOffOutlined, VisibilityOutlined, ExpandMoreOutlined, ExpandLessOutlined, DownloadOutlined, Settings, FileCopyOutlined, RadioButtonCheckedOutlined, RadioButtonUncheckedOutlined, AddCircleOutline, RemoveCircleOutline } from '@mui/icons-material';
 import { MoorhenMapSettingsMenuItem } from "../menu-item/MoorhenMapSettingsMenuItem";
@@ -9,14 +9,15 @@ import { MoorhenDeleteDisplayObjectMenuItem } from "../menu-item/MoorhenDeleteDi
 import { MoorhenSetMapWeight } from "../menu-item/MoorhenSetMapWeight"
 import { MoorhenMapHistogram } from "../misc/MoorhenMapHistogram"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
-import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip, hexToRgb } from "@mui/material"
+import { Accordion, AccordionDetails, AccordionSummary, IconButton, MenuItem, Popover, Tooltip } from "@mui/material"
 import { HexColorInput, RgbColorPicker } from "react-colorful"
 import { moorhen } from "../../types/moorhen"
-import { MoorhenNotification } from "../misc/MoorhenNotification"
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, changeContourLevel, setMapAlpha, setMapColours, setMapRadius, setMapStyle, setNegativeMapColours, setPositiveMapColours, showMap, changeMapRadius } from "../../store/mapContourSettingsSlice";
+import { useSnackbar } from "notistack";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
 
 type ActionButtonType = {
     label: string;
@@ -146,7 +147,6 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const contourWheelSensitivityFactor = useSelector((state: moorhen.State) => state.mouseSettings.contourWheelSensitivityFactor)
     const defaultExpandDisplayCards = useSelector((state: moorhen.State) => state.miscAppSettings.defaultExpandDisplayCards)
     const mapIsVisible = useSelector((state: moorhen.State) => state.mapContourSettings.visibleMaps.includes(props.map.molNo))
-    const dispatch = useDispatch()
 
     const [isCollapsed, setIsCollapsed] = useState<boolean>(!defaultExpandDisplayCards);
     const [currentName, setCurrentName] = useState<string>(props.map.name);
@@ -160,6 +160,10 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
     const isDirty = useRef<boolean>(false)
     const histogramRef = useRef(null)
     const intervalRef = useRef(null)
+
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
 
     useImperativeHandle(cardRef, () => ({
         forceIsCollapsed: (value: boolean) => { 
@@ -344,15 +348,11 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
             }
             batch(() => {
                 dispatch( setContourLevel({ molNo: props.map.molNo, contourLevel: newMapContourLevel }) )
-                dispatch(setNotificationContent(
-                    <MoorhenNotification key={guid()} hideDelay={5000}>
-                    <h5 style={{margin: 0}}>
-                        <span>
-                            {`Level: ${newMapContourLevel.toFixed(2)} ${props.map.mapRmsd ? '(' + (newMapContourLevel / props.map.mapRmsd).toFixed(2) + ' rmsd)' : ''}`}
-                        </span>
-                    </h5>
-                    </MoorhenNotification>
-                ))
+                enqueueSnackbar(`map-${props.map.molNo}-contour-lvl-change`, {
+                    variant: "mapContourLevel",
+                    persist: true,
+                    mapMolNo: props.map.molNo
+                })
             })
         }
     }, [mapContourLevel, mapRadius, activeMap?.molNo, props.map.molNo, mapIsVisible])
@@ -498,7 +498,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={positiveMapColourHex} onChange={(hex) => {
-                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                const [r, g, b] = MoorhenColourRule.parseHexToRgba(hex)
                                 handlePositiveMapColorChange({r, g, b})
                             }}/>
                         </div>
@@ -509,7 +509,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <div style={{width: '100%', display: 'flex', justifyContent: 'center'}}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={negativeMapColourHex} onChange={(hex) => {
-                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                const [r, g, b] = MoorhenColourRule.parseHexToRgba(hex)
                                 handleNegativeMapColorChange({r, g, b})
                             }}/>
                         </div>
@@ -547,7 +547,7 @@ export const MoorhenMapCard = forwardRef<any, MoorhenMapCardPropsInterface>((pro
                         <div style={{width: '100%', display: 'flex', justifyContent: 'center', marginBottom: '0.1rem'}}>
                             <div className="moorhen-hex-input-decorator">#</div>
                             <HexColorInput className="moorhen-hex-input" color={mapColourHex} onChange={(hex) => {
-                                const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                                const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(hex)
                                 handleColorChange({r, g, b})
                             }}/>
                         </div>

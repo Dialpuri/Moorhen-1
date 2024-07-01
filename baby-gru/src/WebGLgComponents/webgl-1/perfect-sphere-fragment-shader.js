@@ -37,10 +37,15 @@ var perfect_sphere_fragment_shader_source = `
     uniform sampler2D ShadowMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;
+    uniform float xSSAOScaling;
+    uniform float ySSAOScaling;
     uniform bool doShadows;
     uniform int shadowQuality;
 
     uniform bool clipCap;
+
+    uniform int peelNumber;
+    uniform sampler2D depthPeelSamplers;
 
     float lookup(vec2 offSet){
       vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
@@ -66,12 +71,22 @@ var perfect_sphere_fragment_shader_source = `
       if(zz <= 0.06)
           discard;
 
+      if(dot(eyePos, clipPlane1)<0.0){
+           discard;
+      }
+
       vec4 pos = eyePos;
       pos.z += silly_scale*z*size_v;
       pos = projMatrix * pos;
+      gl_FragDepthEXT = (pos.z / pos.w + 1.0) / 2.0;
 
-      if(dot(eyePos, clipPlane1)<0.0){
-           discard;
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          float max_depth;
+          max_depth = texture2D(depthPeelSamplers,tex_coord).r;
+          if(gl_FragDepthEXT <= max_depth || abs(gl_FragDepthEXT - max_depth)<1e-6 ) {
+              discard;
+          }
       }
 
       float clipd;
@@ -109,8 +124,6 @@ var perfect_sphere_fragment_shader_source = `
               */
           }
       }
-
-      gl_FragDepthEXT = (pos.z / pos.w + 1.0) / 2.0;
 
       vec3 L;
       vec3 E;

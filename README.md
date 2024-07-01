@@ -43,11 +43,21 @@ Binaries are available on the releases page. Please read the instructions there 
 * git
 * curl
 * patch
-* emsdk (Steps 1 and 2 below)
+* ninja
+* meson
 * cmake
+* flex
+* bison
 * A *native* C++ compiler. (This is required for part of the `boost` build system).
 * `autoconf`,`autotools`
 * `libtool`
+* emsdk/emscripten (Steps 1 and 2 below)
+\
+\
+Most of these (except emscripten) can be installed by somelike like `sudo apt install git cmake curl patch meson ninja-build autoconf automake libtool flex bison g++` on a Debian like system. All of these should be available through Homebrew or Ports on macOS.
+\
+\
+Moorhen should build on any reasonably recent version of macOS (Intel or Arm64) and any reasonly recent Linux distribution (x86_64 or aarch64). Tested on Ubuntu 22.04 x86_64, Raspberry Pi OS Bookworm/Debian 12 on Pi5, macOS Monteray and Sonama and others.
 
 1. Install emscripten (following  [https://emscripten.org/docs/getting_started/downloads.html](https://emscripten.org/docs/getting_started/downloads.html)):  
 `git clone https://github.com/emscripten-core/emsdk.git`  
@@ -67,15 +77,16 @@ Binaries are available on the releases page. Please read the instructions there 
 5. Build gsl, Boost, RDKIt, Coot, the CCP4 libraries and examples:  
 <br>In this branch, it is intended that you do the build in the source directory. 
 <br/>After first checkout you should run the following script to build:  
-`./initial_build.sh`  
+`./moorhen_build.sh`  
 This should build all dependencies and then `Moorhen`. 
 \
 \
 It is also possible to build a 64-bit version of Moorhen which (currently) can address up to 8GB memory:  
-`./initial_build.sh --64bit`  
+`./moorhen_build.sh --64bit`  
 Note that you need a 64-bit WASM capable web browser to use this. Most browsers are not 64-bit capable by default. Some have
 64-bit capability available as an option or in development versions.  
-See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)
+See the `MEMORY64` feature at [https://webassembly.org/features/](https://webassembly.org/features/)  
+Moorhen developers have seen success with Firefox Nightly on MacOS and Linux and Chrome Canary (with `chrome://flags/#enable-experimental-webassembly-features`) on MacOS.
 
 6. To run the Moorhen molecular graphics application:  
 `cd baby-gru`  

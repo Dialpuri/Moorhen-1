@@ -1,29 +1,37 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { moorhen } from '../types/moorhen'
 
+const initialState = {
+  devMode: null,
+  userPreferencesMounted: false,
+  appTitle: 'Moorhen',
+  cootInitialized: false,
+  activeMap: null,
+  theme: 'flatly',
+  viewOnly: false,
+  residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
+  showResidueSelection: false,
+  isShowingTomograms: false,
+  isAnimatingTrajectory: false,
+  isChangingRotamers: false,
+  isDraggingAtoms: false,
+  isRotatingAtoms: false,
+  newCootCommandExit: false,
+  newCootCommandStart: false,
+  useRamaRefinementRestraints: false,
+  useTorsionRefinementRestraints: false,
+}
+
 export const generalStatesSlice = createSlice({
   name: 'generalStates',
-  initialState: {
-    devMode: null,
-    userPreferencesMounted: false,
-    appTitle: 'Moorhen',
-    cootInitialized: false,
-    notificationContent: null,
-    activeMap: null,
-    theme: 'flatly',
-    viewOnly: false,
-    residueSelection: { molecule: null, first: null, second: null, cid: null, isMultiCid: false, label: null } as moorhen.ResidueSelection,
-    showResidueSelection: false,
-    isAnimatingTrajectory: false,
-    isChangingRotamers: false,
-    isDraggingAtoms: false,
-    isRotatingAtoms: false,
-    newCootCommandExit: false,
-    newCootCommandStart: false,
-    useRamaRefinementRestraints: false,
-    useTorsionRefinementRestraints: false,
-  },
+  initialState: initialState,
   reducers: {
+    resetGeneralStates: (state) => {
+      return initialState
+    },
+    setIsShowingTomograms: (state, action: {payload: boolean, type: string}) => {
+      return {...state, isShowingTomograms: action.payload}
+    },
     setIsAnimatingTrajectory: (state, action: {payload: boolean, type: string}) => {
       return {...state, isAnimatingTrajectory: action.payload}
     },
@@ -47,9 +55,6 @@ export const generalStatesSlice = createSlice({
     },
     setTheme: (state, action: {payload: string, type: string}) => {
       return {...state, theme: action.payload}
-    },
-    setNotificationContent: (state, action: {payload: JSX.Element, type: string}) => {
-      return {...state, notificationContent: action.payload}
     },
     setViewOnly: (state, action: {payload: boolean, type: string}) => {
       return {...state, viewOnly: action.payload}
@@ -94,12 +99,13 @@ export const generalStatesSlice = createSlice({
 }})
 
 export const {
-  setNotificationContent, setActiveMap, setViewOnly, setTheme, setIsDraggingAtoms,
+  setActiveMap, setViewOnly, setTheme, setIsDraggingAtoms,
   setAppTittle, setUserPreferencesMounted, setDevMode, setCootInitialized, 
   setStopResidueSelection, setStartResidueSelection, clearResidueSelection,
   setMoleculeResidueSelection, setResidueSelection, setCidResidueSelection,
   setIsRotatingAtoms, setIsChangingRotamers, setShowResidueSelection,
   toggleCootCommandExit, toggleCootCommandStart, setIsAnimatingTrajectory,
+  resetGeneralStates, setIsShowingTomograms
 } = generalStatesSlice.actions
 
 export default generalStatesSlice.reducer

@@ -9,6 +9,8 @@ var triangle_fragment_shader_source = `
     uniform sampler2D ShadowMap;
     uniform float xPixelOffset;
     uniform float yPixelOffset;
+    uniform float xSSAOScaling;
+    uniform float ySSAOScaling;
     uniform bool doShadows;
     uniform int shadowQuality;
 
@@ -40,6 +42,10 @@ var triangle_fragment_shader_source = `
     uniform vec4 light_colours_specular;
     uniform vec4 light_colours_diffuse;
     uniform float specularPower;
+    uniform vec3 screenZFrag;
+
+    uniform int peelNumber;
+    uniform sampler2D depthPeelSamplers;
 
     float lookup(vec2 offSet){
       //float xPixelOffset_old = 1.0/1024.0;
@@ -63,6 +69,15 @@ var triangle_fragment_shader_source = `
       }
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
+      }
+
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          float max_depth;
+          max_depth = texture2D(depthPeelSamplers,tex_coord).r;
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
+              discard;
+          }
       }
 
       float shad = 1.0;
@@ -92,10 +107,11 @@ var triangle_fragment_shader_source = `
       vec4 Ispec=vec4(0.0,0.0,0.0,0.0);
       vec3 norm = normalize(vNormal);
 
-      E = (mvInvMatrix * vec4(normalize(-v),1.0)).xyz;
-      L = normalize((mvInvMatrix *light_positions).xyz);
+      E = screenZFrag;
+      L = light_positions.xyz;
       R = normalize(-reflect(L,norm));
       Iamb += light_colours_ambient;
+
       Idiff += light_colours_diffuse * max(dot(norm,L), 0.0);
       float y = max(max(light_colours_specular.r,light_colours_specular.g),light_colours_specular.b);
       Ispec += light_colours_specular * pow(max(dot(R,E),0.0),specularPower);

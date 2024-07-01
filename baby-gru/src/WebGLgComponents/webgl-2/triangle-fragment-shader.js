@@ -1,5 +1,9 @@
 var triangle_fragment_shader_source = `#version 300 es\n
+
     precision mediump float;
+
+    vec4 fxaa(sampler2D tex, vec2 fragCoord, vec2 resolution);
+
     in lowp vec4 vColor;
     in lowp vec3 vNormal;
     in lowp vec4 eyePos;
@@ -48,11 +52,14 @@ var triangle_fragment_shader_source = `#version 300 es\n
     uniform float specularPower;
     uniform vec3 screenZFrag;
 
+    uniform int peelNumber;
+    uniform sampler2D depthPeelSamplers;
+
     out vec4 fragColor;
 
     float lookup(vec2 offSet){
-      //float xPixelOffset_old = 1.0/1024.0;
-      //float yPixelOffset_old = 1.0/1024.0;
+      //float xPixelOffset_old = 1.0/800.0;
+      //float yPixelOffset_old = 1.0/800.0;
       vec4 coord = ShadowCoord + vec4(offSet.x * xPixelOffset * ShadowCoord.w, offSet.y * yPixelOffset * ShadowCoord.w, 0.07, 0.0);
       if(coord.s>1.0||coord.s<0.0||coord.t>1.0||coord.t<0.0)
           return 1.0;
@@ -73,6 +80,15 @@ var triangle_fragment_shader_source = `#version 300 es\n
       }
       if(dot(eyePos, clipPlane1)<0.0){
        discard;
+      }
+
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          float max_depth;
+          max_depth = texture(depthPeelSamplers,tex_coord).r;
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
+              discard;
+          }
       }
 
       float shad = 1.0;
@@ -134,14 +150,17 @@ var triangle_fragment_shader_source = `#version 300 es\n
 
       color *= occ;
       if(doEdgeDetect){
-          float edge = texture(edgeDetectMap, vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*ySSAOScaling) ).x;
+
+          vec2 resolution;
+          resolution.x = 1.0/xSSAOScaling;
+          resolution.y = 1.0/ySSAOScaling;
+          float edge = fxaa(edgeDetectMap, gl_FragCoord.xy, resolution).x;
+
           color *= edge;
       }
       color.a = vColor.a;
 
-
       fragColor = mix(color, fogColour, fogFactor );
-      //fragColor = vec4(occ,occ,occ, vColor.a);
     }
 `;
 

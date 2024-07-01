@@ -18,19 +18,38 @@ var lines_fragment_shader_source = `#version 300 es\n
     uniform vec4 clipPlane7;
     uniform int nClipPlanes;
 
+    uniform int peelNumber;
+    uniform sampler2D depthPeelSamplers;
+
     out vec4 fragColor;
 
     void main(void) {
+
       if(dot(eyePos, clipPlane0)<0.0){
-       discard;
+          discard;
       }
+
       if(dot(eyePos, clipPlane1)<0.0){
-       discard;
+          discard;
       }
+
+      /*
+      //FIXME - Boo no scaling in this shader...
+      if(peelNumber>0) {
+          vec2 tex_coord = vec2(gl_FragCoord.x*xSSAOScaling,gl_FragCoord.y*xSSAOScaling);
+          float max_depth;
+          max_depth = texture(depthPeelSamplers,tex_coord).r;
+          if(gl_FragCoord.z <= max_depth || abs(gl_FragCoord.z - max_depth)<1e-6 ) {
+              discard;
+          }
+      }
+      */
+
       float FogFragCoord = abs(eyePos.z/eyePos.w);
       float fogFactor = (fog_end - FogFragCoord)/(fog_end - fog_start);
       fogFactor = 1.0 - clamp(fogFactor,0.0,1.0);
       fragColor = mix(vColor, fogColour, fogFactor );
+
     }
 `;
 

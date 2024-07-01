@@ -2,19 +2,20 @@ import { Form, Button, InputGroup, SplitButton, Dropdown } from "react-bootstrap
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { MoorhenMap } from "../../utils/MoorhenMap";
 import { useState, useRef } from "react";
-import { WarningOutlined } from "@mui/icons-material";
-import { getMultiColourRuleArgs, guid } from "../../utils/MoorhenUtils";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
+import { getMultiColourRuleArgs, guid } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch, batch } from 'react-redux';
-import { setActiveMap, setNotificationContent } from "../../store/generalStatesSlice";
+import { setActiveMap } from "../../store/generalStatesSlice";
 import { addMolecule } from "../../store/moleculesSlice";
 import { addMap } from "../../store/mapsSlice";
 import { webGL } from "../../types/mgWebGL";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { useSnackbar } from "notistack";
 
 export const MoorhenFetchOnlineSourcesForm = (props: {
     monomerLibraryPath: string;
+    store: ToolkitStore;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -30,18 +31,13 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     const [isValidPdbId, setIsValidPdbId] = useState<boolean>(true)
 
     const dispatch = useDispatch()
+
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
-    const { commandCentre, glRef, monomerLibraryPath } = props;
+    const { enqueueSnackbar } = useSnackbar()
 
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
-        <><WarningOutlined style={{ margin: 0 }} />
-            <h4 className="moorhen-warning-toast">
-                {message}
-            </h4>
-            <WarningOutlined style={{ margin: 0 }} /></>
-    </MoorhenNotification>
+    const { commandCentre, glRef, monomerLibraryPath, store } = props;
 
     const fetchFiles = (): void => {
         if (pdbCodeFetchInputRef.current.value === "") {
@@ -130,7 +126,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string, isAF2?: boolean): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
@@ -153,7 +149,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             props.onMoleculeLoad(newMolecule)
             return newMolecule
         } catch (err) {
-            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
+            enqueueSnackbar('Failed to read molecule', {variant: "error"})
             console.log(`Cannot fetch molecule from ${url}`)
             setIsValidPdbId(false)
             props.setBusy(false)
@@ -161,7 +157,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMapFromURL = async (url: RequestInfo | URL, mapName: string, isDiffMap: boolean = false, contourLevel?: number): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap(commandCentre, glRef)
+        const newMap = new MoorhenMap(commandCentre, glRef, store)
         try {
             try {
                 await newMap.loadToCootFromMapURL(url, mapName, isDiffMap)
@@ -182,7 +178,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
             })
         } catch (err) {
             console.warn(err)
-            dispatch(setNotificationContent(getWarningToast(`Failed to read map`)))
+            enqueueSnackbar('Failed to read map', {variant: "warning"})
             console.log(`Cannot fetch map from ${url}`)
             props.setBusy(false)
         }
@@ -190,7 +186,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
     }
 
     const fetchMtzFromURL = async (url: RequestInfo | URL, mapName: string, selectedColumns: moorhen.selectedMtzColumns): Promise<moorhen.Map> => {
-        const newMap = new MoorhenMap(commandCentre, glRef)
+        const newMap = new MoorhenMap(commandCentre, glRef, store)
         try {
             await newMap.loadToCootFromMtzURL(url, mapName, selectedColumns)
             if (newMap.molNo === -1) throw new Error("Cannot read the fetched mtz...")
@@ -199,7 +195,7 @@ export const MoorhenFetchOnlineSourcesForm = (props: {
                 dispatch(setActiveMap(newMap))
             })
         } catch {
-            dispatch(setNotificationContent(getWarningToast(`Failed to read mtz`)))
+            enqueueSnackbar('Failed to read mtz', {variant: "error"})
             console.log(`Cannot fetch mtz from ${url}`)
             props.setBusy(false)
         }

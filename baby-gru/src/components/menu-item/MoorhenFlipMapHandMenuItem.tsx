@@ -7,15 +7,19 @@ import { webGL } from "../../types/mgWebGL";
 import { batch, useDispatch, useSelector } from "react-redux";
 import { addMap } from "../../store/mapsSlice";
 import { hideMap, setContourLevel, setMapAlpha, setMapRadius, setMapStyle } from "../../store/mapContourSettingsSlice";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
 
 export const MoorhenFlipMapHandMenuItem = (props: {
     setPopoverIsShown: React.Dispatch<React.SetStateAction<boolean>>
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
+    store: ToolkitStore;
 }) => {
 
     const dispatch = useDispatch()
+
     const maps = useSelector((state: moorhen.State) => state.maps)
+    
     const selectRef = useRef<HTMLSelectElement>(null)
 
     const onCompleted = async () => {
@@ -24,7 +28,7 @@ export const MoorhenFlipMapHandMenuItem = (props: {
         }
 
         const mapNo = parseInt(selectRef.current.value)
-        const newMap = new MoorhenMap(props.commandCentre, props.glRef)
+        const newMap = new MoorhenMap(props.commandCentre, props.glRef, props.store)
         const selectedMap = maps.find(map => map.molNo === mapNo)
 
         if (!selectedMap) {

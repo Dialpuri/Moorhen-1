@@ -1,10 +1,10 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { MoorhenDraggableModalBase } from "./MoorhenDraggableModalBase";
 import { useDispatch, useSelector } from "react-redux";
-import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/MoorhenUtils";
+import { convertRemToPx, convertViewtoPx, rgbToHex } from "../../utils/utils";
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { MoorhenLightPosition } from "../webMG/MoorhenLightPosition";
-import { Form, InputGroup, Stack } from "react-bootstrap";
+import { Button, Form, InputGroup, Stack } from "react-bootstrap";
 import { 
     setBackgroundColor, setClipCap, setDepthBlurDepth, setDepthBlurRadius, setDoSSAO, setResetClippingFogging,
     setSsaoRadius, setSsaoBias,setUseOffScreenBuffers, setDoEdgeDetect, setEdgeDetectDepthThreshold, setEdgeDetectNormalThreshold,
@@ -14,7 +14,12 @@ import { HexColorInput, RgbColorPicker } from "react-colorful";
 import { CirclePicker } from "react-color"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
-import { hexToRgb } from "@mui/material";
+import { Tooltip } from "@mui/material";
+import { useSnackbar } from "notistack";
+import { LastPageOutlined } from "@mui/icons-material";
+import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { modalKeys } from "../../utils/enums";
+import { hideModal } from "../../store/modalsSlice";
 
 const EdgeDetectPanel = (props: {}) => {
     const dispatch = useDispatch()
@@ -161,7 +166,7 @@ const BackgroundColorPanel = (props: {}) => {
             <HexColorInput className='moorhen-hex-input'
                 color={rgbToHex(innerBackgroundColor.r, innerBackgroundColor.g, innerBackgroundColor.b)}
                 onChange={(hex) => {
-                    const [r, g, b] = hexToRgb(hex).replace('rgb(', '').replace(')', '').split(', ').map(item => parseFloat(item))
+                    const [r, g, b, a] = MoorhenColourRule.parseHexToRgba(hex)
                     handleColorChange({r, g, b})
             }}/>
         </div>
@@ -189,8 +194,8 @@ const DepthBlurPanel = (props: {
             </InputGroup>
             <MoorhenSlider
                 isDisabled={!useOffScreenBuffers}
-                minVal={0.0}
-                maxVal={1.0}
+                minVal={0.4}
+                maxVal={0.6}
                 logScale={false}
                 sliderTitle="Blur depth"
                 initialValue={depthBlurDepth}
@@ -373,17 +378,35 @@ const LightingPanel = (props: {
     </div>
 }
 
+const MoorhenSeceneSettings = (props: { glRef: React.RefObject<webGL.MGWebGL>; stackDirection: "horizontal" | "vertical";}) => {
+
+    return <Stack gap={2} direction={props.stackDirection} style={{display: 'flex', alignItems: 'start', width: '100%', height: "100%"}}>
+        <Stack gap={2} direction="vertical">
+            <ClipFogPanel glRef={props.glRef}/>
+            <BackgroundColorPanel/>
+            <EdgeDetectPanel/>
+        </Stack>
+        <Stack gap={1} direction="vertical">
+            <LightingPanel glRef={props.glRef}/>
+            {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
+            <OcclusionPanel/>
+        </Stack>
+    </Stack>
+}
+
 export const MoorhenSceneSettingsModal = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
-    show: boolean;
-    setShow: (show: boolean) => void;
 }) => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
 
+    const dispatch = useDispatch()
+
+    const { enqueueSnackbar } = useSnackbar()
+
     return <MoorhenDraggableModalBase
-                modalId="scene-settings-modal"
+                modalId={modalKeys.SCENE_SETTINGS}
                 left={width / 5}
                 top={height / 6}
                 headerTitle="Scene settings"
@@ -395,20 +418,28 @@ export const MoorhenSceneSettingsModal = (props: {
                 maxWidth={convertRemToPx(60)}
                 enforceMaxBodyDimensions={true}
                 body={
-                    <Stack gap={2} direction="horizontal" style={{display: 'flex', alignItems: 'start', width: '100%', height:'100%'}}>
-                        <Stack gap={2} direction="vertical">
-                            <ClipFogPanel glRef={props.glRef}/>
-                            <BackgroundColorPanel/>
-                            <EdgeDetectPanel/>
-                        </Stack>
-                        <Stack gap={1} direction="vertical">
-                            <LightingPanel glRef={props.glRef}/>
-                            {props.glRef.current.isWebGL2() && <DepthBlurPanel/>}
-                            <OcclusionPanel/>
-                        </Stack>
-                    </Stack>
+                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="horizontal" />
                 }
                 footer={null}
+                additionalHeaderButtons={[
+                    <Tooltip title={"Move to side panel"}  key={1}>
+                        <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
+                            dispatch( hideModal(modalKeys.SCENE_SETTINGS) )
+                            enqueueSnackbar(modalKeys.SCENE_SETTINGS, {
+                                variant: "sideBar",
+                                persist: true,
+                                anchorOrigin: {horizontal: "right", vertical: "bottom"},
+                                title: "Scene settings",
+                                modalId: modalKeys.SCENE_SETTINGS,
+                                children: <div style={{ overflowY: 'scroll', overflowX: "hidden", maxHeight: '50vh' }}>
+                                    <MoorhenSeceneSettings glRef={props.glRef} stackDirection="vertical" />
+                                </div>
+                            })                
+                        }}>
+                            <LastPageOutlined/>
+                        </Button>
+                    </Tooltip>
+                ]}
                 {...props}
                 />
 }

@@ -4,13 +4,14 @@ import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect"
 import { Dropdown, Form, InputGroup, SplitButton } from "react-bootstrap"
 import { MoorhenBaseMenuItem } from "./MoorhenBaseMenuItem"
 import { TextField } from "@mui/material"
-import { readTextFile } from "../../utils/MoorhenUtils"
+import { readTextFile } from "../../utils/utils"
 import { moorhen } from "../../types/moorhen";
 import { webGL } from "../../types/mgWebGL";
 import { libcootApi } from "../../types/libcoot"
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore"
 
 const MoorhenImportLigandDictionary = (props: { 
     id: string;
@@ -20,6 +21,7 @@ const MoorhenImportLigandDictionary = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
     panelContent: JSX.Element;
     fetchLigandDict: () => Promise<string>;
     addToMoleculeValueRef: React.MutableRefObject<number>;
@@ -42,33 +44,35 @@ const MoorhenImportLigandDictionary = (props: {
         createInstance, setCreateInstance, addToMolecule, fetchLigandDict, panelContent,
         setAddToMolecule, tlcValueRef, createRef, moleculeSelectRef, addToRef,moleculeSelectValueRef,
         addToMoleculeValueRef, setPopoverIsShown, glRef, commandCentre, menuItemText,
-        monomerLibraryPath, id
+        monomerLibraryPath, id, store
     } = props
 
     const handleFileContent = useCallback(async (fileContent: string) => {
         let newMolecule: moorhen.Molecule
         let selectedMoleculeIndex: number
+        let molNosToUpdate: number[] = []
         
         if (moleculeSelectValueRef.current) {
             selectedMoleculeIndex = parseInt(moleculeSelectValueRef.current)
             const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedMoleculeIndex)
             if (typeof selectedMolecule !== 'undefined') {
-                selectedMolecule.addDict(fileContent)
+                await selectedMolecule.addDict(fileContent)
+                await selectedMolecule.redraw()
+                molNosToUpdate.push(selectedMolecule.molNo)
             }
         } else {
             selectedMoleculeIndex = -999999
-            await Promise.all([
-                commandCentre.current.cootCommand({
-                    returnType: "status",
-                    command: 'read_dictionary_string',
-                    commandArgs: [fileContent, selectedMoleculeIndex],
-                    changesMolecules: []
-                }, false),
-                ...molecules.map(molecule => {
-                    molecule.addDictShim(fileContent)
-                    return molecule.redraw()
-                })
-            ])
+            await commandCentre.current.cootCommand({
+                returnType: "status",
+                command: 'read_dictionary_string',
+                commandArgs: [fileContent, selectedMoleculeIndex],
+                changesMolecules: []
+            }, false),
+            await Promise.all(molecules.map(molecule => {
+                molecule.cacheLigandDict(fileContent)
+                molNosToUpdate.push(molecule.molNo)
+                return molecule.redraw()
+            }))
         }
                 
         if (createRef.current) {
@@ -81,7 +85,7 @@ const MoorhenImportLigandDictionary = (props: {
                     ...glRef.current.origin.map(coord => -coord)]
             }, true) as moorhen.WorkerResponse<number> 
             if (result.data.result.status === "Completed") {
-                newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+                newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
                 newMolecule.molNo = result.data.result.result
                 newMolecule.name = instanceName
                 newMolecule.setBackgroundColour(backgroundColor)
@@ -96,10 +100,10 @@ const MoorhenImportLigandDictionary = (props: {
                 if (addToMoleculeValueRef.current !== -1) {
                     const toMolecule = molecules.find(molecule => molecule.molNo === addToMoleculeValueRef.current)
                     if (typeof toMolecule !== 'undefined') {
+                        molNosToUpdate.push(toMolecule.molNo)
                         const otherMolecules = [newMolecule]
                         await toMolecule.mergeMolecules(otherMolecules, true)
                         await toMolecule.redraw()
-                        dispatch( triggerUpdate(toMolecule.molNo) )
                     } else {
                         await newMolecule.redraw()
                     }
@@ -107,6 +111,7 @@ const MoorhenImportLigandDictionary = (props: {
             }
         }
 
+        [...new Set(molNosToUpdate)].map(molNo => dispatch(triggerUpdate(molNo)))
         setPopoverIsShown(false)
 
     }, [moleculeSelectValueRef, createRef, setPopoverIsShown, molecules, commandCentre, glRef, tlcValueRef, monomerLibraryPath, backgroundColor, defaultBondSmoothness, addToMoleculeValueRef])
@@ -167,6 +172,7 @@ export const MoorhenSMILESToLigandMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
 }) => {
 
     const [smile, setSmile] = useState<string>('')
@@ -283,6 +289,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
  }) => {
     
     const fileOrLibraryRef = useRef<string>("Library")
@@ -329,6 +336,7 @@ export const MoorhenImportDictionaryMenuItem = (props: {
                 <option key="File" value="File">From local file</option>
                 <option key="Library" value="Library">From monomer library</option>
                 <option key="MRC" value="MRC">Fetch from MRC-LMB</option>
+                <option key="PDBe" value="PDBe">Fetch from PDBe</option>
             </Form.Select>
         </Form.Group>
         {fileOrLibrary === 'File' ? <>
@@ -395,6 +403,9 @@ export const MoorhenImportDictionaryMenuItem = (props: {
             return fetchLigandDictFromUrl(url)
         } else if (fileOrLibraryRef.current === "MRC" && tlcValueRef.current) {
             const url = `https://raw.githubusercontent.com/MRC-LMB-ComputationalStructuralBiology/monomers/master/${tlcValueRef.current.toLowerCase()[0]}/${tlcValueRef.current.toUpperCase()}.cif`
+            return fetchLigandDictFromUrl(url)
+        } else if (fileOrLibraryRef.current === "PDBe" && tlcValueRef.current) {
+            const url = `https://www.ebi.ac.uk/pdbe/static/files/pdbechem_v2/${tlcValueRef.current.toUpperCase()}.cif`
             return fetchLigandDictFromUrl(url)
         } else {
             console.log(`Unkown ligand source or invalid input`)

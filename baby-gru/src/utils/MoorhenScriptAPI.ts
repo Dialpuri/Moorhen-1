@@ -2,15 +2,18 @@ import { moorhen } from "../types/moorhen"
 import { webGL } from "../types/mgWebGL";
 import { MoorhenMolecule } from "./MoorhenMolecule";
 import { MoorhenMap } from "./MoorhenMap";
-import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { addMolecule } from "../store/moleculesSlice";
 import { addMap } from "../store/mapsSlice";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { MoorhenColourRule } from "./MoorhenColourRule";
+import { MoorhenMoleculeRepresentation } from "./MoorhenMoleculeRepresentation";
 
 interface MoorhenScriptApiInterface {
     molecules: moorhen.Molecule[];
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    store: ToolkitStore;
 }
 
 export class MoorhenScriptApi implements MoorhenScriptApiInterface {
@@ -19,10 +22,12 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
     maps: moorhen.Map[];
     glRef: React.RefObject<webGL.MGWebGL>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
+    store: ToolkitStore;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore, molecules: moorhen.Molecule[], maps: moorhen.Map[]) {
         this.molecules = molecules
         this.maps = maps
+        this.store = store
         this.glRef = glRef
         this.commandCentre = commandCentre
     }
@@ -103,7 +108,9 @@ export class MoorhenScriptApi implements MoorhenScriptApiInterface {
             commandCentre: this.commandCentre,
             MoorhenMolecule: MoorhenMolecule,
             MoorhenMap: MoorhenMap,
-            dispatch: (arg) => MoorhenReduxStore.dispatch( arg ),
+            MoorhenColourRule: MoorhenColourRule,
+            MoorhenMoleculeRepresentation: MoorhenMoleculeRepresentation,
+            dispatch: (arg) => this.store.dispatch( arg ),
             addMolecule: addMolecule,
             addMap: addMap, 
             run_command: this.runCommand,

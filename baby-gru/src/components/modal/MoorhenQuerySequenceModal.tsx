@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Backdrop } from '@mui/material';
 import { ArrowBackIosOutlined, ArrowForwardIosOutlined, FirstPageOutlined, WarningOutlined } from "@mui/icons-material";
-import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs, guid } from '../../utils/MoorhenUtils';
+import { convertRemToPx, convertViewtoPx, getMultiColourRuleArgs, guid } from '../../utils/utils';
 import { Card, Row, Col, Form, FormSelect, Button, Spinner, Stack } from "react-bootstrap";
 import { moorhen } from "../../types/moorhen";
 import { MoorhenMoleculeSelect } from "../select/MoorhenMoleculeSelect";
@@ -10,18 +10,18 @@ import { MoorhenMolecule } from "../../utils/MoorhenMolecule"
 import { MoorhenDraggableModalBase } from "../modal/MoorhenDraggableModalBase"
 import { MoorhenSlider } from "../misc/MoorhenSlider";
 import { webGL } from "../../types/mgWebGL";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { useSelector, useDispatch } from 'react-redux';
 import { addMolecule } from "../../store/moleculesSlice";
-import { setNotificationContent } from "../../store/generalStatesSlice";
 import { MoorhenColourRule } from "../../utils/MoorhenColourRule";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { enqueueSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenQuerySequenceModal = (props: {
-    show: boolean;
-    setShow: React.Dispatch<React.SetStateAction<boolean>>;
     commandCentre: React.RefObject<moorhen.CommandCentre>;
     glRef: React.RefObject<webGL.MGWebGL>;
     monomerLibraryPath: string;
+    store: ToolkitStore;
 }) => {
 
     const [selectedModel, setSelectedModel] = useState<null | number>(null)
@@ -40,16 +40,17 @@ export const MoorhenQuerySequenceModal = (props: {
     const moleculeSelectRef = useRef<HTMLSelectElement>();
     const chainSelectRef = useRef<HTMLSelectElement>();
     const sourceSelectRef =  useRef<HTMLSelectElement>();
-
-    const dispatch = useDispatch()
+   
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
 
+    const dispatch = useDispatch()
+
     const fetchMoleculeFromURL = async (url: RequestInfo | URL, molName: string): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(props.commandCentre, props.glRef, props.store, props.monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         try {
@@ -57,15 +58,7 @@ export const MoorhenQuerySequenceModal = (props: {
             if (newMolecule.molNo === -1) throw new Error("Cannot read the fetched molecule...")
             return newMolecule
         } catch (err) {
-            dispatch(setNotificationContent(
-                <MoorhenNotification key={guid()} hideDelay={5000}>
-                    <><WarningOutlined style={{margin: 0}}/>
-                        <h4 className="moorhen-warning-toast">
-                            Failed to read molecule
-                        </h4>
-                    <WarningOutlined style={{margin: 0}}/></>
-                </MoorhenNotification>
-            ))
+            enqueueSnackbar("Failed to read molecule", {variant: "error"})
             console.log(`Cannot fetch molecule from ${url}`)
         }
     }
@@ -293,7 +286,7 @@ export const MoorhenQuerySequenceModal = (props: {
     }, [numberOfHits])
 
     return <MoorhenDraggableModalBase
-        modalId="query-sequence-modal"
+        modalId={modalKeys.SEQ_QUERY}
         left={width / 4}
         top={height / 4}
         defaultHeight={convertViewtoPx(10, height)}

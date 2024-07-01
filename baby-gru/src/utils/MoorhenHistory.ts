@@ -1,4 +1,4 @@
-import { guid } from './MoorhenUtils';
+import { guid } from './utils';
 import { moorhen } from '../types/moorhen';
 import { webGL } from '../types/mgWebGL';
 
@@ -53,7 +53,8 @@ const formatCommandArgsString = (command: string, commandArgs: (number | string)
             formattedString = `${commandArgs[1]},  ${commandArgs[2]}`
             break
         case 'shim_new_positions_for_residue_atoms':
-        case 'shim_auto_open_mtz':
+        case 'shim_auto_read_mtz':
+        case 'pop_back':
             formattedString = ''
             break
         case 'refine_residue_range':

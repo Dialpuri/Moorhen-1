@@ -1,23 +1,31 @@
 import { OverlayTrigger, Stack, Tooltip } from "react-bootstrap"
+<<<<<<<< HEAD:baby-gru/src/components/toasts/MoorhenAcceptRejectRotateTranslate.tsx
 import { MoorhenNotification } from "../misc/MoorhenNotification"
+========
+>>>>>>>> origin:baby-gru/src/components/snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar.tsx
 import { CheckOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material"
 import { IconButton } from "@mui/material"
 import { useDispatch, useSelector } from "react-redux"
 import { moorhen } from "../../types/moorhen"
-import { useCallback, useEffect, useRef, useState } from "react"
-import { getTooltipShortcutLabel } from '../../utils/MoorhenUtils';
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react"
+import { getTooltipShortcutLabel } from '../../utils/utils';
 import { setIsRotatingAtoms } from "../../store/generalStatesSlice"
 import { webGL } from "../../types/mgWebGL"
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice"
+import { SnackbarContent, useSnackbar } from "notistack"
 
-export const MoorhenAcceptRejectRotateTranslate = (props: {
-    onExit: () => void;
-    moleculeRef: React.RefObject<moorhen.Molecule>;
-    cidRef: React.RefObject<string>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-}) => {
+export const MoorhenAcceptRejectRotateTranslateSnackBar = forwardRef<
+    HTMLDivElement,
+    {
+        moleculeRef: React.RefObject<moorhen.Molecule>;
+        cidRef: React.RefObject<string>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        id: string;
+    }
+>((props, ref) => {
 
     const dispatch = useDispatch()
+
     const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
     const shortCuts = useSelector((state: moorhen.State) => state.shortcutSettings.shortCuts)
 
@@ -25,9 +33,15 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
 
     const fragmentMoleculeRef = useRef<null | moorhen.Molecule>(null)
 
+    const { closeSnackbar } = useSnackbar()
+
     const stopRotateTranslate = useCallback(async (acceptTransform: boolean = false) => {
         props.glRef.current.setActiveMolecule(null)
+<<<<<<<< HEAD:baby-gru/src/components/toasts/MoorhenAcceptRejectRotateTranslate.tsx
         await props.moleculeRef.current.unhideAll(false)
+========
+        await props.moleculeRef.current.unhideAll(!acceptTransform)
+>>>>>>>> origin:baby-gru/src/components/snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar.tsx
         if (acceptTransform) {
             const transformedAtoms = fragmentMoleculeRef.current.transformedCachedAtomsAsMovedAtoms()
             await props.moleculeRef.current.updateWithMovedAtoms(transformedAtoms)
@@ -35,6 +49,7 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
         }
         await fragmentMoleculeRef.current.delete(true)
         dispatch( setIsRotatingAtoms(false) )
+        closeSnackbar(props.id)
     }, [props, props.moleculeRef, fragmentMoleculeRef])
 
     useEffect(() => {
@@ -67,7 +82,7 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
             setTimeout(async () => {
                 props.moleculeRef.current.hideCid(props.cidRef.current)
                 await Promise.all(props.moleculeRef.current.representations
-                    .filter(item => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'DishyBases', 'VdwSpheres', 'allHBonds', 'glycoBlocks', 'MetaBalls'].includes(item.style) })
+                    .filter(item => { return ['CRs', 'CBs', 'CAs', 'ligands', 'gaussian', 'MolecularSurface', 'VdWSurface', 'VdwSpheres', 'allHBonds', 'glycoBlocks', 'MetaBalls'].includes(item.style) })
                     .map(representation => {
                         if (representation.buffers.length > 0 && representation.buffers[0].visible) {
                             return newMolecule.addRepresentation(representation.style, representation.cid)
@@ -83,6 +98,7 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
         startRotateTranslate()
     }, [])
 
+<<<<<<<< HEAD:baby-gru/src/components/toasts/MoorhenAcceptRejectRotateTranslate.tsx
     return  <MoorhenNotification>
                 <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
                     <OverlayTrigger
@@ -118,3 +134,38 @@ export const MoorhenAcceptRejectRotateTranslate = (props: {
                 </Stack>
             </MoorhenNotification>
 }
+========
+    return  <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
+        <Stack gap={2} direction='horizontal' style={{ width: '100%', display: 'flex', justifyContent: 'space-between' }}>
+            <OverlayTrigger
+                placement="bottom"
+                overlay={
+                    <Tooltip id="tip-tooltip" className="moorhen-tooltip">
+                        <div>
+                            <em>{"Hold <Shift><Alt> to translate"}</em>
+                            <br></br>
+                            <em>{shortCuts ? `Hold ${getTooltipShortcutLabel(JSON.parse(shortCuts as string).residue_camera_wiggle)} to move view` : null}</em>
+                        </div>
+                    </Tooltip>
+                }>
+                <InfoOutlined />
+            </OverlayTrigger>
+            <div>
+                <span>Accept changes?</span>
+            </div>
+            <div>
+                <IconButton style={{ padding: 0, color: isDark ? 'white' : 'grey', }} onClick={async () => {
+                    await stopRotateTranslate(true)
+                }}>
+                    <CheckOutlined />
+                </IconButton>
+                <IconButton style={{ padding: 0, color: isDark ? 'white' : 'grey' }} onClick={async () => {
+                    await stopRotateTranslate()
+                }}>
+                    <CloseOutlined />
+                </IconButton>
+            </div>
+        </Stack>
+    </SnackbarContent>
+})
+>>>>>>>> origin:baby-gru/src/components/snack-bar/MoorhenAcceptRejectRotateTranslateSnackBar.tsx

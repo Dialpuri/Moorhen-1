@@ -9,8 +9,7 @@ import sceneSettingsReducer from './sceneSettingsSlice'
 import miscAppSettingsReducer from './miscAppSettingsSlice'
 import generalStatesReducer from './generalStatesSlice'
 import hoveringStatesReducer from './hoveringStatesSlice'
-import activeModalsReducer from './activeModalsSlice'
-import activePopUpsReducer from './activePopUpsSlice'
+import modalsReducer from './modalsSlice'
 import mapContourSettingsReducer from './mapContourSettingsSlice'
 import moleculeMapUpdateReducer from './moleculeMapUpdateSlice'
 import sharedSessionReducer from './sharedSessionSlice'
@@ -28,8 +27,7 @@ export default configureStore({
         miscAppSettings: miscAppSettingsReducer,
         generalStates: generalStatesReducer,
         hoveringStates: hoveringStatesReducer,
-        activeModals: activeModalsReducer,
-        activePopUps: activePopUpsReducer,
+        modals: modalsReducer,
         mapContourSettings: mapContourSettingsReducer,
         moleculeMapUpdate: moleculeMapUpdateReducer,
         sharedSession: sharedSessionReducer,

@@ -72,6 +72,26 @@ gemmi::Structure read_structure_from_string(const std::string &data, const std::
     return gemmi::read_structure_from_char_array(c_data,size,path);
 }
 
+struct CompoundInfo {
+    std::string name;
+    std::string three_letter_code;
+};
+
+std::vector<CompoundInfo> parse_mon_lib_list_cif(const std::string &data) {
+    gemmi::cif::Document doc = gemmi::cif::read_string(data);
+    gemmi::cif::Block block = doc.blocks[1];
+    gemmi::cif::Item item = block.items[0];
+    gemmi::cif::Table table = block.item_as_table(item);
+    std::vector<CompoundInfo> result;
+    for (const auto& row : table) {
+        CompoundInfo compound;
+        compound.three_letter_code = row.value_at(0);
+        compound.name = row.value_at(2);
+        result.push_back(std::move(compound));
+    }
+    return result;
+}
+
 struct LigandDictInfo {
     std::string comp_id;
     std::string dict_contents;
@@ -2620,6 +2640,13 @@ EMSCRIPTEN_BINDINGS(gemmi_module) {
 
     register_vector<LigandDictInfo>("VectorLigandDictInfo");
 
+    value_object<CompoundInfo>("CompoundInfo")
+    .field("name", &CompoundInfo::name)
+    .field("three_letter_code", &CompoundInfo::three_letter_code)
+    ;
+
+    register_vector<CompoundInfo>("VectorCompoundInfo");
+
     value_object<SequenceResInfo>("SequenceResInfo")
     .field("resNum", &SequenceResInfo::resNum)
     .field("resCode", &SequenceResInfo::resCode)
@@ -2768,7 +2795,11 @@ GlobWalk
     function("read_structure_from_string",&read_structure_from_string);
     function("parse_ligand_dict_info", &parse_ligand_dict_info);
     function("read_structure_file",&gemmi::read_structure_file);
+#if __EMSCRIPTEN_major__ == 3 && __EMSCRIPTEN_minor__ == 1 && __EMSCRIPTEN_tiny__ >= 60
+    function("read_mtz_file",&gemmi::read_mtz_file,return_value_policy::take_ownership());
+#else
     function("read_mtz_file",&gemmi::read_mtz_file);
+#endif
     function("get_spacegroup_by_name",&gemmi::get_spacegroup_by_name);
     function("gemmi_setup_entities",&gemmi::setup_entities);
 
@@ -2826,6 +2857,7 @@ GlobWalk
     function("guess_coord_data_format", &guess_coord_data_format);
     function("parse_multi_cids", &parse_multi_cids);
     function("get_non_selected_cids", &get_non_selected_cids);
+    function("parse_mon_lib_list_cif", &parse_mon_lib_list_cif);
 
     value_array<std::array<double, 9>>("array_native_double_9")
         .element(emscripten::index<0>())

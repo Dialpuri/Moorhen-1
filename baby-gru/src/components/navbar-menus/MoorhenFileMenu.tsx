@@ -1,4 +1,4 @@
-import { Form, Stack } from "react-bootstrap";
+import { Form } from "react-bootstrap";
 import { MoorhenMolecule } from "../../utils/MoorhenMolecule";
 import { useState, useCallback } from "react";
 import { MoorhenFetchOnlineSourcesForm } from "../form/MoorhenFetchOnlineSourcesForm"
@@ -10,25 +10,24 @@ import { MoorhenImportFSigFMenuItem } from "../menu-item/MoorhenImportFSigFMenuI
 import { MoorhenBackupsMenuItem } from "../menu-item/MoorhenBackupsMenuItem"
 import { MoorhenImportMapCoefficientsMenuItem } from "../menu-item/MoorhenImportMapCoefficientsMenuItem"
 import { MoorhenDeleteEverythingMenuItem } from "../menu-item/MoorhenDeleteEverythingMenuItem"
-import { IconButton, MenuItem } from "@mui/material";
-import { RadioButtonCheckedOutlined, StopCircleOutlined, WarningOutlined } from "@mui/icons-material";
-import { convertViewtoPx, doDownload, loadSessionFromProtoMessage, guid, readDataFile, loadSessionFromJsonString } from "../../utils/MoorhenUtils";
-import { getBackupLabel } from "../../utils/MoorhenTimeCapsule"
+import { MenuItem } from "@mui/material";
+import { convertViewtoPx, doDownload, guid, readDataFile } from "../../utils/utils";
+import { MoorhenTimeCapsule } from "../../utils/MoorhenTimeCapsule"
 import { MoorhenNavBarExtendedControlsInterface } from "./MoorhenNavBar";
-import { MoorhenNotification } from "../misc/MoorhenNotification";
 import { moorhen } from "../../types/moorhen";
 import { useSelector, useDispatch } from 'react-redux';
-import { setNotificationContent } from "../../store/generalStatesSlice";
 import { addMoleculeList } from "../../store/moleculesSlice";
-import { setShowQuerySequenceModal } from "../../store/activeModalsSlice";
-import { setHoveredAtom } from "../../store/hoveringStatesSlice";
+import { showModal } from "../../store/modalsSlice";
 import { moorhensession } from "../../protobuf/MoorhenSession";
+import { useSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
 
 export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
-    
-    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
-    
+
     const dispatch = useDispatch()
+
+    const [popoverIsShown, setPopoverIsShown] = useState<boolean>(false)
+        
     const maps = useSelector((state: moorhen.State) => state.maps)
     const defaultBondSmoothness = useSelector((state: moorhen.State) => state.sceneSettings.defaultBondSmoothness)
     const enableTimeCapsule = useSelector((state: moorhen.State) => state.backupSettings.enableTimeCapsule)
@@ -36,17 +35,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     const backgroundColor = useSelector((state: moorhen.State) => state.sceneSettings.backgroundColor)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
 
-    const { commandCentre, glRef, monomerLibraryPath, setBusy } = props;
+    const { enqueueSnackbar } = useSnackbar()
 
-    const getWarningToast = (message: string) => <MoorhenNotification key={guid()} hideDelay={3000} width={20}>
-            <><WarningOutlined style={{margin: 0}}/>
-                <h4 className="moorhen-warning-toast">
-                    {message}
-                </h4>
-            <WarningOutlined style={{margin: 0}}/></>
-        </MoorhenNotification>
+    const { commandCentre, glRef, monomerLibraryPath, setBusy, store } = props;
 
-    const menuItemProps = { setPopoverIsShown, getWarningToast, ...props }
+    const menuItemProps = { setPopoverIsShown, ...props }
 
     const loadPdbFiles = async (files: FileList) => {
         let readPromises: Promise<moorhen.Molecule>[] = []
@@ -56,7 +49,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         
         let newMolecules: moorhen.Molecule[] = await Promise.all(readPromises)
         if (!newMolecules.every(molecule => molecule.molNo !== -1)) {
-            dispatch(setNotificationContent(getWarningToast(`Failed to read molecule`)))
+            enqueueSnackbar("Failed to read molecule", { variant: "warning" })
             newMolecules = newMolecules.filter(molecule => molecule.molNo !== -1)
             if (newMolecules.length === 0) {
                 return
@@ -76,7 +69,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
     }
 
     const readPdbFile = async (file: File): Promise<moorhen.Molecule> => {
-        const newMolecule = new MoorhenMolecule(commandCentre, glRef, monomerLibraryPath)
+        const newMolecule = new MoorhenMolecule(commandCentre, glRef, store, monomerLibraryPath)
         newMolecule.setBackgroundColour(backgroundColor)
         newMolecule.defaultBondOptions.smoothness = defaultBondSmoothness
         await newMolecule.loadToCootFromFile(file)        
@@ -112,7 +105,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             await loadSession(sessionMessage) 
         } catch (err) {
             console.log(err)
-            dispatch(setNotificationContent(getWarningToast("Error loading session")))
+            enqueueSnackbar("Error loading the session", {variant: "error"})
         }
     }
 
@@ -121,7 +114,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
             props.commandCentre.current.history.reset()
             let status = -1
             if (typeof session === 'string') {
-                status = await loadSessionFromJsonString(
+                status = await MoorhenTimeCapsule.loadSessionFromJsonString(
                     session as string,
                     props.monomerLibraryPath,
                     molecules, 
@@ -129,10 +122,11 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     props.commandCentre,
                     props.timeCapsuleRef,
                     props.glRef,
+                    store,
                     dispatch
                 )
             } else {
-                status = await loadSessionFromProtoMessage(
+                status = await MoorhenTimeCapsule.loadSessionFromProtoMessage(
                     session,
                     props.monomerLibraryPath,
                     molecules, 
@@ -140,15 +134,16 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     props.commandCentre,
                     props.timeCapsuleRef,
                     props.glRef,
+                    store,
                     dispatch
                 )
             }
             if (status === -1) {
-                dispatch(setNotificationContent(getWarningToast(`Failed to read backup (deprecated format)`)))
+                enqueueSnackbar("Failed to read backup (deprecated format)", {variant: "warning"})
             }
         } catch (err) {
             console.log(err)
-            dispatch(setNotificationContent(getWarningToast("Error loading session")))
+            enqueueSnackbar("Error loading session", {variant: "warning"})
         }
     }
 
@@ -173,7 +168,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         }
         const keyString = JSON.stringify({
             ...key,
-            label: getBackupLabel(key)
+            label: MoorhenTimeCapsule.getBackupLabel(key)
         })
         return props.timeCapsuleRef.current.createBackup(keyString, sessionString)
     }
@@ -188,24 +183,7 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
         } else {
             document.body.click()
             props.videoRecorderRef.current.startRecording()
-            dispatch(
-                setNotificationContent(
-                    <MoorhenNotification key={guid()} width={13}>
-                        <Stack gap={2} direction='horizontal' style={{width: '100%', display:'flex', justifyContent: 'space-between'}}>
-                            <div style={{alignItems: 'center', display: 'flex', justifyContent: 'center'}}>
-                                <RadioButtonCheckedOutlined style={{color: 'red', borderRadius: '30px', borderWidth: 0, borderStyle: 'hidden'}} className="moorhen-recording-icon"/>
-                                <span>Recording</span>
-                            </div>
-                            <IconButton onClick={() => {
-                                props.videoRecorderRef.current.stopRecording()
-                                dispatch( setNotificationContent(null) )
-                            }}>
-                                <StopCircleOutlined/>
-                            </IconButton>
-                        </Stack>
-                    </MoorhenNotification>   
-                )
-            )
+            enqueueSnackbar("screen-recoder", {variant: "screenRecorder", videoRecorderRef: props.videoRecorderRef, persist: true})
         }
     }, [props.videoRecorderRef])
 
@@ -218,18 +196,18 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                         <Form.Control type="file" accept=".pdb, .mmcif, .cif, .ent" multiple={true} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { loadPdbFiles(e.target.files) }}/>
                     </Form.Group>}
                     
-                    <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} />
+                    <MoorhenFetchOnlineSourcesForm commandCentre={commandCentre} glRef={glRef} setBusy={setBusy} monomerLibraryPath={monomerLibraryPath} store={store} />
                     
                     {!props.disableFileUploads && 
                     <Form.Group className='moorhen-form-group' controlId="upload-session-form">
                         <Form.Label>Load from stored session</Form.Label>
-                        <Form.Control type="file" accept=".pb" multiple={false} onChange={handleSessionUpload}/>
+                        <Form.Control type="file" accept=".pb," multiple={false} onChange={handleSessionUpload}/>
                     </Form.Group>}
                     
                     <hr></hr>
 
                     <MenuItem id='query-online-services-sequence' onClick={() => {
-                        dispatch(setShowQuerySequenceModal(true))
+                        dispatch(showModal(modalKeys.SEQ_QUERY))
                         document.body.click()
                     }}>
                         Query online services with a sequence...
@@ -258,10 +236,14 @@ export const MoorhenFileMenu = (props: MoorhenNavBarExtendedControlsInterface) =
                     <MoorhenBackupsMenuItem {...menuItemProps} disabled={!enableTimeCapsule} loadSession={loadSession} />
 
                     <MenuItem id='screenshot-menu-item' onClick={() =>  {
-                        dispatch(setHoveredAtom({ molecule: null, cid: null }))
-                        molecules.forEach(molecule => molecule.clearBuffersOfStyle('hover'))
-                        props.videoRecorderRef.current?.takeScreenShot("moorhen.png")}
-                        }>
+                        enqueueSnackbar("screenshot", {
+                            variant: "screenshot",
+                            persist: true,
+                            glRef: props.glRef,
+                            videoRecorderRef: props.videoRecorderRef 
+                        })
+                        document.body.click()
+                    }}>
                         Screenshot
                     </MenuItem>
 

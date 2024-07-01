@@ -70,6 +70,7 @@ export namespace webGL {
         drawTextLabels(up: vec3, right: vec3) : void;
         drawTriangles(calculatingShadowMap: boolean, invMat: mat4) : void;
         drawImagesAndText(invMat: mat4) : void;
+        drawTexturedShapes(theMatrix: mat4) : void;
         drawTransparent(theMatrix: mat4) : void;
         bindFramebufferDrawBuffers() : void;
         GLrender(calculatingShadowMap: boolean) : mat4;
@@ -104,6 +105,8 @@ export namespace webGL {
         initTextBackgroundShaders(vertexShaderTextBackground : string, fragmentShaderTextBackground : string)  : void;
         initOutlineShaders(vertexShader : string, fragmentShader : string)  : void;
         initShaders(vertexShader : string, fragmentShader : string)  : void;
+        initShadersTextured(vertexShader : string, fragmentShader : string)  : void;
+        initShadersDepthPeelAccum(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShaders(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShadersInstanced(vertexShader : string, fragmentShader : string)  : void;
         initGBufferShadersPerfectSphere(vertexShader : string, fragmentShader : string)  : void;
@@ -163,6 +166,8 @@ export namespace webGL {
         setEdgeDetectNormalScale(normalScale: number): void;
         setOccludeDiffuse(doOccludeDiffuse: boolean): void;
         setOutlinesOn(doOutline: boolean): void;
+        setDoOrderIndependentTransparency(doOrderIndependentTransparency: boolean): void;
+        setDoTransparentScreenshotBackground(transparentScreenshotBackground: boolean): void;
         setSpinTestState(doSpinTest: boolean): void;
         setBlurSize(blurSize: number): void;
         setSSAORadius(radius: number): void;
@@ -188,6 +193,7 @@ export namespace webGL {
         createGBuffers(width : number,height : number) : void;
         createEdgeDetectFramebufferBuffer(width : number,height : number) : void;
         recreateOffScreeenBuffers(width: number,  height: number) : void;
+        recreateDepthPeelBuffers(width: number,  height: number) : void;
         createSimpleBlurOffScreeenBuffers() : void;
         draggableMolecule: moorhen.Molecule
         activeMolecule: moorhen.Molecule
@@ -224,6 +230,8 @@ export namespace webGL {
         gBuffersFramebufferSize : number;
         save_pixel_data: boolean;
         renderToTexture: boolean;
+        transparentScreenshotBackground: boolean;
+        doDepthPeelPass: boolean;
         showShortCutHelp: string[];
         WEBGL2: boolean;
         doRedraw: boolean;
@@ -237,6 +245,7 @@ export namespace webGL {
         rttFramebuffer: MGWebGLFrameBuffer;
         doPerspectiveProjection: boolean;
         labelsTextCanvasTexture: TextCanvasTexture;
+        texturedShapes: TexturedShape[];
         currentBufferIdx: number;
         atom_span: number;
         axesColourBuffer: WebGLBuffer;
@@ -270,6 +279,8 @@ export namespace webGL {
         xPixelOffset: number;
         yPixelOffset: number;
         occludeDiffuse: boolean;
+        doOrderIndependentTransparency: boolean;
+        doPeel: boolean;
         doShadowDepthDebug: boolean;
         doSpin: boolean;
         doStenciling: boolean;
@@ -339,6 +350,9 @@ export namespace webGL {
         ssaoRadius: number;
         ssaoBias: number;
         offScreenFramebuffer: MGWebGLFrameBuffer;
+        depthPeelFramebuffers: MGWebGLFrameBuffer[];
+        depthPeelColorTextures: WebGLTexture[];
+        depthPeelDepthTextures: WebGLTexture[];
         offScreenFramebufferBlurX: MGWebGLFrameBuffer;
         offScreenFramebufferBlurY: MGWebGLFrameBuffer;
         offScreenFramebufferSimpleBlurX: MGWebGLFrameBuffer;
@@ -347,6 +361,8 @@ export namespace webGL {
         offScreenReady: boolean;
         offScreenRenderbufferColor: WebGLRenderbuffer;
         offScreenRenderbufferDepth: WebGLRenderbuffer;
+        depthPeelRenderbufferColor: WebGLRenderbuffer[];
+        depthPeelRenderbufferDepth: WebGLRenderbuffer[];
         offScreenTexture: WebGLTexture;
         pMatrix: Float32Array;
         pmvMatrix: Float32Array;
@@ -361,6 +377,8 @@ export namespace webGL {
         rttTextureDepth: WebGLTexture;
         rttDepthTexture: WebGLTexture;
         screenZ: number;
+        shaderProgramTextured: MGWebGLTextureQuadShader;
+        shaderProgramDepthPeelAccum: MGWebGLShaderDepthPeelAccum;
         shaderProgram: ShaderTriangles;
         shaderProgramGBuffers: ShaderGBuffersTriangles;
         shaderProgramGBuffersInstanced: ShaderGBuffersTrianglesInstanced;

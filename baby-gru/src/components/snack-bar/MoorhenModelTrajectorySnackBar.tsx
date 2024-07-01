@@ -1,24 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { MoorhenNotification } from './MoorhenNotification';
-import { useDispatch } from 'react-redux';
-import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
-import { sleep } from "../../utils/MoorhenUtils";
-import { hideMolecule, showMolecule } from "../../store/moleculesSlice";
-import { moorhen } from '../../types/moorhen';
-import { webGL } from '../../types/mgWebGL';
-import { IconButton, LinearProgress, Slider } from "@mui/material";
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { webGL } from "../../types/mgWebGL";
+import { moorhen } from "../../types/moorhen";
+import { useDispatch, useSelector } from "react-redux";
+import { SnackbarContent, useSnackbar } from "notistack";
+import { sleep } from "../../utils/utils";
 import { Stack } from "react-bootstrap";
+import { IconButton, LinearProgress, Slider } from "@mui/material";
 import { PauseCircleOutline, PlayCircleOutline, ReplayCircleFilledOutlined, StopCircleOutlined } from "@mui/icons-material";
-import { setNotificationContent, setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
+import { setIsAnimatingTrajectory } from "../../store/generalStatesSlice";
+import { MoorhenMoleculeRepresentation } from "../../utils/MoorhenMoleculeRepresentation";
+import { hideMolecule, showMolecule } from '../../store/moleculesSlice';
 
-export const MoorhenModelTrajectoryManager = (props: {
-    commandCentre: React.RefObject<moorhen.CommandCentre>;
-    glRef: React.RefObject<webGL.MGWebGL>;
-    molecule: moorhen.Molecule;
-    representationStyle: moorhen.RepresentationStyles;
-}) => {
+export const MoorhenModelTrajectorySnackBar = forwardRef<
+    HTMLDivElement, 
+    {
+        commandCentre: React.RefObject<moorhen.CommandCentre>;
+        glRef: React.RefObject<webGL.MGWebGL>;
+        moleculeMolNo: number;
+        representationStyle: string;
+        id: string;
+    }
+>((props, ref) => {
+
 
     const dispatch = useDispatch()
+
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const isDark = useSelector((state: moorhen.State) => state.sceneSettings.isDark)
 
     const isPlayingAnimationRef = useRef<boolean>(false)
     const representationRef = useRef<null | moorhen.MoleculeRepresentation>(null)
@@ -30,6 +38,10 @@ export const MoorhenModelTrajectoryManager = (props: {
     const [progress, setProgress] = useState<number>(0)
     const [currentFrameIndex, setCurrentFrameIndex] = useState<number>(0)
     const [isPlayingAnimation, setIsPlayingAnimation] = useState<boolean>(false)
+
+    const selectedMolecule = useMemo(() => molecules.find(molecule => molecule.molNo === props.moleculeMolNo), [props.moleculeMolNo])
+
+    const { closeSnackbar } = useSnackbar()
 
     const computeFrames = async (molecule: moorhen.Molecule, representation: moorhen.MoleculeRepresentation) => {
         
@@ -83,23 +95,23 @@ export const MoorhenModelTrajectoryManager = (props: {
             }
         }
 
-    }, [isPlayingAnimation, props.molecule])
+    }, [isPlayingAnimation, selectedMolecule])
 
     useEffect(() => {
         const loadFrames = async () => {
             dispatch(setIsAnimatingTrajectory(true))
-            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle, '/*/*/*/*', props.commandCentre, props.glRef)
+            representationRef.current = new MoorhenMoleculeRepresentation(props.representationStyle as moorhen.RepresentationStyles, '/*/*/*/*', props.commandCentre, props.glRef)
             setBusyComputingFrames(true)
-            framesRef.current = await computeFrames(props.molecule, representationRef.current)
+            framesRef.current = await computeFrames(selectedMolecule, representationRef.current)
             setNFrames(framesRef.current.length)
             setBusyComputingFrames(false)
-            dispatch(hideMolecule(props.molecule))
+            dispatch(hideMolecule(selectedMolecule))
             await representationRef.current.buildBuffers(framesRef.current[0])    
         }
         loadFrames()
     }, [])
 
-    return  <MoorhenNotification width={18} placeOnTop={false}>
+    return  <SnackbarContent ref={ref} className="moorhen-notification-div" style={{ backgroundColor: isDark ? 'grey' : 'white', color: isDark ? 'white' : 'grey' }}>
         {busyComputingFrames ?
             <Stack gap={1} direction='vertical'>
             <span>Please wait...</span>
@@ -115,9 +127,10 @@ export const MoorhenModelTrajectoryManager = (props: {
                 isPlayingAnimationRef.current = false
                 setIsPlayingAnimation(false)
                 representationRef.current?.deleteBuffers()
-                dispatch(showMolecule(props.molecule))
-                dispatch(setIsAnimatingTrajectory(false))
-                dispatch(setNotificationContent(null))
+                dispatch( showMolecule(selectedMolecule) )
+                dispatch( setIsAnimatingTrajectory(false) )
+                closeSnackbar(props.id)
+                
             }}>
                 <StopCircleOutlined/>
             </IconButton>
@@ -134,7 +147,8 @@ export const MoorhenModelTrajectoryManager = (props: {
                     iFrameRef.current = Math.floor((newVal as number) * framesRef.current.length / 100)
                     representationRef.current.deleteBuffers()
                     if (iFrameRef.current < framesRef.current.length) {
-                        representationRef.current.buildBuffers(framesRef.current[iFrameRef.current]).then(_ => setCurrentFrameIndex(newVal as number))
+                        representationRef.current.buildBuffers(framesRef.current[iFrameRef.current])
+                        setCurrentFrameIndex(newVal as number)
                     }
                 }}
             />
@@ -142,5 +156,5 @@ export const MoorhenModelTrajectoryManager = (props: {
         :
         <span>Something went wrong...</span>
         }
-    </MoorhenNotification>
-}
+    </SnackbarContent>
+})

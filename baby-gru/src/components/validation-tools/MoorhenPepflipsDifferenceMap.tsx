@@ -6,10 +6,10 @@ import { libcootApi } from "../../types/libcoot";
 import { moorhen } from "../../types/moorhen";
 import { useDispatch, useSelector } from "react-redux";
 import { triggerUpdate } from "../../store/moleculeMapUpdateSlice";
-import { MoorhenResidueSteps } from '../toasts/MoorhenResidueSteps';
-import { setNotificationContent } from '../../store/generalStatesSlice';
-import { cidToSpec, sleep } from '../../utils/MoorhenUtils';
-import { setShowPepFlipsValidationModal } from "../../store/activeModalsSlice";
+import { cidToSpec, sleep } from '../../utils/utils';
+import { hideModal } from "../../store/modalsSlice";
+import { useSnackbar } from "notistack";
+import { modalKeys } from "../../utils/enums";
 
 interface Props extends moorhen.CollectedProps {
     dropdownId: number;
@@ -24,8 +24,11 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     const [selectedRmsd, setSelectedRmsd] = useState<number>(4.5)
     
     const dispatch = useDispatch()
+
     const enableRefineAfterMod = useSelector((state: moorhen.State) => state.refinementSettings.enableRefineAfterMod)
     const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+
+    const { enqueueSnackbar } = useSnackbar()
 
     const filterMapFunction = (map: moorhen.Map) => map.isDifference
 
@@ -77,7 +80,7 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
     }
 
     const handleFlipAll = useCallback(async (selectedMolecule: moorhen.Molecule, residues: libcootApi.InterestingPlaceDataJS[]) => {
-        dispatch( setShowPepFlipsValidationModal(false) )
+        dispatch( hideModal(modalKeys.PEPTIDE_FLIPS) )
         if (selectedMolecule) {
             const handleStepFlipPeptide = async (cid: string) => {
                 const resSpec = cidToSpec(cid)
@@ -92,20 +95,20 @@ export const MoorhenPepflipsDifferenceMap = (props: Props) => {
                 }
             })
         
-            dispatch( setNotificationContent(
-                <MoorhenResidueSteps 
-                    timeCapsuleRef={props.timeCapsuleRef}
-                    residueList={residueList}
-                    sleepTime={1500}
-                    onStep={handleStepFlipPeptide}
-                    onStart={async () => {
-                        await selectedMolecule.fetchIfDirtyAndDraw('rama')
-                    }}
-                    onStop={() => {
-                        selectedMolecule.clearBuffersOfStyle('rama')
-                    }}
-                />
-            ))
+            enqueueSnackbar("flip-all-peptides", {
+                variant: "residueSteps",
+                persist: true,
+                timeCapsuleRef: props.timeCapsuleRef,
+                residueList: residueList,
+                sleepTime: 1500,
+                onStep: handleStepFlipPeptide,
+                onStart: async () => {
+                    await selectedMolecule.fetchIfDirtyAndDraw('rama')
+                },
+                onStop: () => {
+                    selectedMolecule.clearBuffersOfStyle('rama')
+                }
+            })
         }
     }, [molecules])
     

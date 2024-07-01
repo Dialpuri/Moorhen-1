@@ -1,9 +1,11 @@
-import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./MoorhenUtils"
+import { readDataFile, guid, rgbToHsv, hsvToRgb } from "./utils"
 import { moorhen } from "../types/moorhen";
 import { webGL } from "../types/mgWebGL";
 import { libcootApi } from "../types/libcoot";
 import pako from "pako"
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
+import { ToolkitStore } from "@reduxjs/toolkit/dist/configureStore";
+import { MoorhenMtzWrapper } from "./MoorhenMtzWrapper";
 
 const _DEFAULT_CONTOUR_LEVEL = 0.8
 const _DEFAULT_RADIUS = 13
@@ -25,6 +27,7 @@ const _DEFAULT_NEGATIVE_MAP_COLOUR = {r: 0.800000011920929, g: 0.400000005960464
  * @constructor
  * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance
  * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance
+ * @param {ToolkitStore} [store=undefined] - A Redux store. By default Moorhen Redux store will be used
  * @example
  * import { MoorhenMap } from "moorhen";
  * 
@@ -49,6 +52,7 @@ export class MoorhenMap implements moorhen.Map {
     name: string
     isEM: boolean
     molNo: number
+    store: ToolkitStore
     commandCentre: React.RefObject<moorhen.CommandCentre>
     glRef: React.RefObject<webGL.MGWebGL>
     mapCentre: [number, number, number]
@@ -63,20 +67,23 @@ export class MoorhenMap implements moorhen.Map {
     associatedReflectionFileName: string
     uniqueId: string
     mapRmsd: number
+    mapMean: number
     suggestedMapWeight: number
     otherMapForColouring: {molNo: number, min: number, max: number};
     diffMapColourBuffers: { positiveDiffColour: number[], negativeDiffColour: number[] }
     defaultMapColour: {r: number, g: number, b: number};
     defaultPositiveMapColour: {r: number, g: number, b: number};
     defaultNegativeMapColour: {r: number, g: number, b: number};
+    autoReadMtz: (source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore) => Promise<moorhen.Map[]>;
 
-    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>) {
+    constructor(commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore = MoorhenReduxStore) {
         this.type = 'map'
         this.name = "unnamed"
         this.isEM = false
         this.molNo = null
         this.commandCentre = commandCentre
         this.glRef = glRef
+        this.store = store
         this.webMGContour = false
         this.showOnLoad = true
         this.displayObjects = { Coot: [] }
@@ -86,6 +93,7 @@ export class MoorhenMap implements moorhen.Map {
         this.associatedReflectionFileName = null
         this.uniqueId = guid()
         this.mapRmsd = null
+        this.mapMean = null
         this.suggestedMapWeight = null
         this.suggestedContourLevel = null
         this.suggestedRadius = null
@@ -334,6 +342,69 @@ export class MoorhenMap implements moorhen.Map {
     }
 
     /**
+     * Static method used to automatically read multiple maps from a single mtz file
+     * @param {File} source - The mtz file
+     * @param {React.RefObject<moorhen.CommandCentre>} commandCentre - A react reference to the command centre instance 
+     * @param {React.RefObject<webGL.MGWebGL>} glRef - A react reference to the MGWebGL instance 
+     * @param {ToolkitStore} store - The redux store
+     * @returns {moorhen.Map[]} A list of maps resulting from reading the mtz file
+     */
+    static async autoReadMtz(source: File, commandCentre: React.RefObject<moorhen.CommandCentre>, glRef: React.RefObject<webGL.MGWebGL>, store: ToolkitStore): Promise<moorhen.Map[]> {
+        const mtzWrapper = new MoorhenMtzWrapper()
+        await mtzWrapper.loadHeaderFromFile(source)
+
+        const response = await commandCentre.current.cootCommand({
+            returnType: "auto_read_mtz_info_array",
+            command: "shim_auto_read_mtz",
+            commandArgs: [mtzWrapper.reflectionData]
+        }, true) as moorhen.WorkerResponse<libcootApi.AutoReadMtzInfoJS[]>
+        
+        if (response.data.result.status === "Exception" || response.data.result.result.length === 0) {
+            console.log(response.data.consoleMessage)
+            console.warn('There was a problem with auto-open mtz...')
+            return []
+        }
+
+        const isDiffMapResponses = await Promise.all(response.data.result.result.map(autoReadInfo => {
+            return commandCentre.current.cootCommand({
+                returnType: "status",
+                command: "is_a_difference_map",
+                commandArgs: [autoReadInfo.idx]
+            }, false) as Promise<moorhen.WorkerResponse<boolean>>
+        }))
+
+        if (isDiffMapResponses.some(result => result.data.result.status == "Exception")) {
+            console.log(isDiffMapResponses.find(result => result.data.result.status === "Exception").data.consoleMessage)
+            console.warn('There was a problem with auto-open mtz...')
+            return []
+        }
+
+        const newMaps = await Promise.all(
+            response.data.result.result.filter(item => item.idx !== -1).map(async (autoReadInfo, index) => {
+                const newMap = new MoorhenMap(commandCentre, glRef, store)
+                newMap.molNo = autoReadInfo.idx
+                newMap.name = `${source.name.replace('mtz', '')}-map-${index}`
+                newMap.isDifference = isDiffMapResponses[index].data.result.result
+                newMap.selectedColumns = {
+                    F: autoReadInfo.F,
+                    Fobs: autoReadInfo.F_obs,
+                    FreeR: autoReadInfo.Rfree,
+                    SigFobs: autoReadInfo.sigF_obs,
+                    PHI: autoReadInfo.phi,
+                    isDifference: newMap.isDifference,
+                    useWeight: autoReadInfo.weights_used,
+                    calcStructFact: true
+                }
+                await newMap.associateToReflectionData(newMap.selectedColumns, mtzWrapper.reflectionData)
+                await newMap.getSuggestedSettings()
+                return newMap
+            })
+        )
+
+        return newMaps
+    }
+
+    /**
      * Get the current map
      * @returns {Promise<moorhen.WorkerResponse>} A worker response with the map arrayBuffer
      */
@@ -390,7 +461,7 @@ export class MoorhenMap implements moorhen.Map {
         positiveMapColour: {r: number; g: number; b: number}; 
         negativeMapColour: {r: number; g: number; b: number}
     } {
-        const state = MoorhenReduxStore.getState()
+        const state = this.store.getState()
         const radius = state.mapContourSettings.mapRadii.find(item => item.molNo === this.molNo)?.radius
         const level = state.mapContourSettings.contourLevels.find(item => item.molNo === this.molNo)?.contourLevel
         const alpha = state.mapContourSettings.mapAlpha.find(item => item.molNo === this.molNo)?.alpha
@@ -669,8 +740,6 @@ export class MoorhenMap implements moorhen.Map {
 
     /**
      * Set the colours for a non-difference map using values from redux store
-     * @param {boolean} [redraw=true] - Indicates whether the map needs to be redrawn after setting the new colours
-     * @returns {Promise<void>}
      */
     async fetchColourAndRedraw(): Promise<void> {
         if (this.isDifference) {
@@ -809,7 +878,7 @@ export class MoorhenMap implements moorhen.Map {
      */
     async copyMap(): Promise<moorhen.Map> {
         const reply = await this.getMap()
-        const newMap = new MoorhenMap(this.commandCentre, this.glRef)
+        const newMap = new MoorhenMap(this.commandCentre, this.glRef, this.store)
         await newMap.loadToCootFromMapData(reply.data.result.mapData, `Copy of ${this.name}`, this.isDifference)
         const { mapRadius, contourLevel } = this.getMapContourParams()
         newMap.suggestedContourLevel = contourLevel
@@ -917,8 +986,24 @@ export class MoorhenMap implements moorhen.Map {
             this.fetchMapRmsd().then(_ => this.estimateMapWeight()),
             this.fetchMapCentre(),
             this.setDefaultColour(),
+            this.fetchMapMean(),
             !this.isEM && this.fetchSuggestedLevel()
         ])
+    }
+
+    async fetchMapMean() {
+        const result = await this.commandCentre.current.cootCommand({
+            command: 'get_map_mean',
+            commandArgs: [this.molNo],
+            returnType: "float"
+        }, false)
+        
+        if (result.data.result.status !== "Exception") {
+            this.mapMean = result.data.result.result
+        } else {
+            console.warn(`Unable to fetch map meap for imol ${this.molNo}`)
+        }
+        return result.data.result?.result
     }
 
     /**
