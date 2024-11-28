@@ -1,6 +1,8 @@
 import { libcootApi } from "../src/types/libcoot"
 import { emscriptem } from "../src/types/emscriptem"
 import { privateer } from "../src/types/privateer";
+import {sails} from "../src/types/sails";
+import SiteResult = sails.SiteResult;
 
 let cootModule: libcootApi.CootModule;
 let molecules_container: libcootApi.MoleculesContainerJS;
@@ -1057,6 +1059,17 @@ const privateerValidationToJSArray = (results: emscriptem.vector<privateer.Resul
     return data;
 }
 
+const sailsResult = (results: emscriptem.vector<sails.SiteResult>): SiteResult[] => {
+    const data: SiteResult[] = [];
+    const resultSize = results.size();
+    for (let i = 0; i < resultSize; i++) {
+        const entry = results.get(i);
+        data.push(entry);
+    }
+    results.delete();
+    return data;
+}
+
 const headerInfoAsJSObject = (result: libcootApi.headerInfo): libcootApi.headerInfoJS => {
 
     const authorLines = result.author_lines
@@ -1243,6 +1256,9 @@ const doCootCommand = (messageData: {
             case 'privateer_results':
                 returnResult = privateerValidationToJSArray(cootResult)
                 break
+            case 'sails_results':
+                returnResult = sailsResult(cootResult)
+                break;
             case 'status':
             default:
                 returnResult = cootResult
