@@ -18,6 +18,7 @@ import { libcootApi } from '../types/libcoot';
 import { privateer } from '../types/privateer';
 import MoorhenReduxStore from "../store/MoorhenReduxStore";
 import { ToolkitStore } from '@reduxjs/toolkit/dist/configureStore';
+import {sails} from "../types/sails";
 
 /**
  * Represents a molecule
@@ -2332,6 +2333,18 @@ export class MoorhenMolecule implements moorhen.Molecule {
         }
 
         return result.data.result.result
+    }
+
+    /**
+     * Get results of Sails N-Glycan finder
+     */
+    async getSailsSiteResult(): Promise<sails.SiteResult[]> {
+        const result = await this.commandCentre.current.cootCommand({
+            command: "get_sails_glycosites",
+            commandArgs: [this.molNo],
+            returnType: 'sails_results',
+        }, false)
+        return result.data.result.result;
     }
 
     /**
