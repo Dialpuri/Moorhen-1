@@ -239,6 +239,7 @@ export namespace moorhen {
         buffersInclude: (bufferIn: { id: string; }) => boolean;
         redrawRepresentation: (id: string) => Promise<void>;
         getPrivateerValidation(useCache?: boolean): Promise<privateer.ResultsEntry[]>;
+        getSailsSiteResult(): Promise<sails.SiteResult[]>;
         getLigandSVG(resName: string, useCache?: boolean): Promise<string>;
         isValidSelection(cid: string): Promise<boolean>;
         fetchHeaderInfo(useCache?: boolean): Promise<libcootApi.headerInfoJS>;
