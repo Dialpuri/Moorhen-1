@@ -17,6 +17,7 @@ export const modalKeys = Object.freeze({
     PEPTIDE_FLIPS: "pepflips",
     UNMODELLED_BLOBS: "unmodelled-blobs",
     CARB_VALIDATION: "carb-validation",
+    SAILS: "sails",
     SLICE_N_DICE: "slice-n-dice",
     SUPERPOSE_MODELS: "superpose",
     SCENE_SETTINGS: "scene-settings",
