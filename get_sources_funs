@@ -320,6 +320,17 @@ getprivateer() {
     echo
 }
 
+getsails() {
+  cdcheckout
+  if [-r sails]; then
+    echo "Using existing sails"
+  else
+    echo "Downloading Sails"
+    git clone https://github.com/Dialpuri/Sails
+  fi
+  echo
+}
+
 getboost() {
     cdcheckout
     if [ -r boost-$boost_release ]; then

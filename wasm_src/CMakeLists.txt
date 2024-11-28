@@ -577,6 +577,7 @@ target_link_libraries(moorhen
     ccp4
     gemmi_cpp
     privateer
+    sails
     slicendice_cpp
     fftw
     rfftw
