@@ -82,8 +82,10 @@ set(LINK_LIBS "gemmi_cpp sails ccp4 fftw rfftw mmdb2 clipper-mmdb clipper-cif cl
 target_link_directories(sails PUBLIC ../mmdb2 ../clipper/cif ../clipper/mmdb ../clipper/core ../clipper/contrib ../clipper/ccp4 ../clipper/gemmi ../fftw ../rfftw ../ccp4 ../gemmi)
 target_link_libraries(sails mmdb2 clipper-mmdb clipper-cif clipper-core clipper-contrib clipper-ccp4 clipper-gemmi gemmi_cpp fftw rfftw ccp4 nodefs.js)
 file(GLOB sails_HEADERS ${WRK_DIR}/src/include/*.h)
+set_target_properties(sails PROPERTIES PUBLIC_HEADER "${sails_HEADERS}")
 
-install(TARGETS sails
+install(
+TARGETS sails
     LIBRARY DESTINATION lib
     PUBLIC_HEADER DESTINATION include/sails
 )
