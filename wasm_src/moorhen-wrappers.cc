@@ -64,6 +64,7 @@
 using namespace emscripten;
 
 #include "privateer-wrappers.h"
+#include "sails-wrappers.h"
 
 #include "headers.h"
 
@@ -312,6 +313,12 @@ class molecules_container_js : public molecules_container_t {
         std::vector<TableEntry> privateer_validate(int imol) {
             auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
             auto results =  validate(file_content, "");
+            return results;
+        }
+
+        std::vector<SiteResult> get_sails_glycosites(int imol) {
+            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
+            auto results = find_sites(file_content, "");
             return results;
         }
 
@@ -1110,6 +1117,16 @@ EMSCRIPTEN_BINDINGS(my_module) {
     register_vector<TableEntry>("Table");
     // END PRIVATEER
 
+    // SAILS
+       value_object<SiteResult>("SiteResult")
+        .field("chain", &SiteResult::chain)
+        .field("seqid", &SiteResult::seqid)
+        .field("name", &SiteResult::name)
+        .field("type", &SiteResult::type)
+        .field("key", &SiteResult::key);
+       register_vector<SiteResult>("SiteResults");
+    // END SAILS
+
     function("unpackCootDataFile",&unpackCootDataFile);
     function("testFloat32Array", &testFloat32Array);
     function("getPositionsFromSimpleMesh2", &getPositionsFromSimpleMesh2);
@@ -1613,6 +1630,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("make_exportable_environment_bond_box",&molecules_container_js::make_exportable_environment_bond_box)
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
     .function("privateer_validate",&molecules_container_js::privateer_validate)
+    .function("get_sails_glycosites",&molecules_container_js::get_sails_glycosites)
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
