@@ -352,6 +352,7 @@ BUILD_SLICENDICE=false
 BUILD_FREETYPE=false
 BUILD_ZLIB=false
 BUILD_PNG=false
+BUILD_SAILS=false
 
 if test -d ${INSTALL_DIR}/include/slicendice_cpp; then
     true
@@ -369,6 +370,12 @@ if test -d ${INSTALL_DIR}/include/privateer; then
     true
 else
     BUILD_PRIVATEER=true
+fi
+
+if test -d ${INSTALL_DIR}/include/sails; then
+    true
+else
+    BUILD_SAILS=true
 fi
 
 if test -d ${INSTALL_DIR}/include/clipper; then
@@ -481,6 +488,7 @@ else
 fi
 fi
 
+
 for mod in $MODULES; do
     case $mod in
        boost) echo "Force build boost"
@@ -519,6 +527,9 @@ for mod in $MODULES; do
        privateer) echo "Force build privateer"
        BUILD_PRIVATEER=true
        ;;
+       sails) echo "Force build sails"
+       BUILD_SAILS=true
+       ;;
        ssm) echo "Force build ssm"
        BUILD_SSM=true
        ;;
@@ -554,6 +565,7 @@ echo "BUILD_FFTW       " $BUILD_FFTW
 echo "BUILD_MMDB2      " $BUILD_MMDB2
 echo "BUILD_CLIPPER    " $BUILD_CLIPPER
 echo "BUILD_PRIVATEER  " $BUILD_PRIVATEER
+echo "BUILD_SAILS      " $BUILD_SAILS
 echo "BUILD_SSM        " $BUILD_SSM
 echo "BUILD_SLICENDICE " $BUILD_SLICENDICE
 echo "BUILD_FREETYPE   " $BUILD_FREETYPE
@@ -797,6 +809,16 @@ if [ $BUILD_PRIVATEER = true ]; then
     emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/privateer  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
     emmake make -j ${NUMPROCS}
     emmake make install || fail "Error installing privateer, giving up."
+fi
+
+#sails
+if [ $BUILD_SAILS = true ]; then
+    getsails
+    mkdir -p ${BUILD_DIR}/sails_build
+    cd ${BUILD_DIR}/sails_build
+    emcmake cmake -DCMAKE_INSTALL_PREFIX=${INSTALL_DIR} ${MOORHEN_SOURCE_DIR}/sails  -DCMAKE_C_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_CXX_FLAGS="${MOORHEN_CMAKE_FLAGS} -I${INSTALL_DIR}/include" -DCMAKE_PREFIX_PATH=${INSTALL_DIR}
+    emmake make -j ${NUMPROCS}
+    emmake make install || fail "Error installing sails, giving up."
 fi
 
 #ssm
