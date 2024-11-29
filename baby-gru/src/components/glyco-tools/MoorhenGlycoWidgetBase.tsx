@@ -6,7 +6,7 @@ import {moorhen} from "../../types/moorhen";
 import {useSelector} from "react-redux";
 import {LinearProgress} from "@mui/material";
 
-export const MoorhenModelBuildingWidgetBase = (props: {
+export const MoorhenGlycoWidgetBase = (props: {
     filterMapFunction?: (arg0: moorhen.Map) => boolean;
     fetchData: (arg0: number, arg1: number) => Promise<any>;
     getCards: (arg0: number, arg1: number, arg2: any) => [JSX.Element[][], JSX.Element[]];

@@ -6,16 +6,16 @@ import { modalKeys } from "../../utils/enums";
 import { convertViewtoPx } from "../../utils/utils";
 import { moorhen } from "../../types/moorhen";
 
-export const MoorhenBuildMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
+export const MoorhenGlycoMenu = (props: MoorhenNavBarExtendedControlsInterface) => {
     const height = useSelector((state: moorhen.State) => state.sceneSettings.height)
     
     const dispatch = useDispatch()
    
     return <div style={{maxHeight: convertViewtoPx(65, height), overflow: 'auto'}}>
             <MenuItem onClick={() => {
-                dispatch(showModal(modalKeys.SAILS))
+                dispatch(showModal(modalKeys.GLYCO))
                 document.body.click()
-            }}>Build carbohydrates with Sails...</MenuItem>
+            }}>Find potential glycosylation sites with Sails...</MenuItem>
 
     </div>
 }
