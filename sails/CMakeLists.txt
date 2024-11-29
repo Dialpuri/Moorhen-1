@@ -89,3 +89,25 @@ TARGETS sails
     LIBRARY DESTINATION lib
     PUBLIC_HEADER DESTINATION include/sails
 )
+
+file(GLOB sails_density_HEADERS ${WRK_DIR}/src/include/density/*.h)
+
+install(FILES
+    ${sails_density_HEADERS}
+    DESTINATION include/sails/density
+)
+
+file(GLOB sails_snfg_HEADERS ${WRK_DIR}/src/include/snfg/*.h)
+
+install(FILES
+    ${sails_snfg_HEADERS}
+    DESTINATION include/sails/snfg
+)
+
+
+file(GLOB sails_third_party_HEADERS ${WRK_DIR}/src/include/third-party/*.h)
+
+install(FILES
+    ${sails_third_party_HEADERS}
+    DESTINATION include/sails/third-party
+)

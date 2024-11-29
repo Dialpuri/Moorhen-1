@@ -498,7 +498,7 @@ FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/n")
 FILE(MAKE_DIRECTORY "data/ccp4_lib/data/monomers/list")
 FILE(MAKE_DIRECTORY "data/privateer_data")
 FILE(COPY ../checkout/privateer-wasm/data/linkage_torsions/privateer_torsions_z_score_database.json DESTINATION data/privateer_data )
-
+FILE(COPY ../checkout/Sails/package/src/sails/data/data.json DESTINATION data/sails )
 FILE(COPY ../checkout/libccp4/data/syminfo.lib DESTINATION data/ccp4_lib/data )
 FILE(COPY ../checkout/monomers/a/ALA.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/a/ASP.cif DESTINATION data/ccp4_lib/data/monomers/a )
@@ -540,6 +540,10 @@ FILE(COPY ../checkout/monomers/n/NA.cif DESTINATION data/ccp4_lib/data/monomers/
 FILE(COPY ../checkout/monomers/a/ATP.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/a/ADP.cif DESTINATION data/ccp4_lib/data/monomers/a )
 FILE(COPY ../checkout/monomers/ener_lib.cif DESTINATION data/ccp4_lib/data/monomers )
+FILE(COPY ../checkout/monomers/n/NAG.cif DESTINATION data/ccp4_lib/data/monomers/n )
+FILE(COPY ../checkout/monomers/b/BMA.cif DESTINATION data/ccp4_lib/data/monomers/b )
+FILE(COPY ../checkout/monomers/m/MAN.cif DESTINATION data/ccp4_lib/data/monomers/m )
+FILE(COPY ../checkout/monomers/f/FUC.cif DESTINATION data/ccp4_lib/data/monomers/f )
 FILE(COPY ../checkout/monomers/list/mon_lib_list.cif DESTINATION data/ccp4_lib/data/monomers/list )
 FILE(COPY ${coot_src}/standard-residues.pdb DESTINATION data/coot )
 FILE(COPY ${coot_rotamer_data} DESTINATION data/coot/rama-data )
@@ -556,7 +560,7 @@ target_link_directories(moorhen PUBLIC
     ${CMAKE_INSTALL_PREFIX}/install64/lib
 )
 else()
-target_link_options(moorhen PRIVATE -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
+target_link_options(moorhen PRIVATE --profiling -sASSERTIONS=2 -pthread -sPTHREAD_POOL_SIZE=32 -sPTHREAD_POOL_SIZE_STRICT=32 -sALLOW_MEMORY_GROWTH=1 --bind -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORT_NAME=createCootModule -sEXPORTED_RUNTIME_METHODS=['FS'] --pre-js ${CMAKE_CURRENT_SOURCE_DIR}/coot_env_web.js)
 target_link_directories(moorhen PUBLIC 
     ${CMAKE_INSTALL_PREFIX}/install/lib
 )
