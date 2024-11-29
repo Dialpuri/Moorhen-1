@@ -322,7 +322,7 @@ getprivateer() {
 
 getsails() {
   cdcheckout
-  if [-r sails]; then
+  if [ -r sails ]; then
     echo "Using existing sails"
   else
     echo "Downloading Sails"
