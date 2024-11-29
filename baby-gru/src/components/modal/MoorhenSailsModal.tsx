@@ -4,14 +4,14 @@ import { CSSProperties, useRef } from "react";
 import { Button, Row, Stack } from "react-bootstrap";
 import { convertRemToPx, convertViewtoPx} from '../../utils/utils';
 import { useDispatch, useSelector } from "react-redux";
-import { MoorhenSailsBuilding } from "../model-building-tools/MoorhenSailsBuilding";
+import { MoorhenSailsFindSites } from "../glyco-tools/MoorhenSailsFindSites";
 import { modalKeys } from "../../utils/enums";
 import { Tooltip } from "@mui/material";
 import { hideModal } from "../../store/modalsSlice";
 import { useSnackbar } from "notistack";
 import { InfoOutlined, LastPageOutlined } from "@mui/icons-material";
 
-export const MoorhenSailsModal = (props: moorhen.CollectedProps) => {
+export const MoorhenSailsFindSitesModal = (props: moorhen.CollectedProps) => {
     const resizeNodeRef = useRef<HTMLDivElement>();
       
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
@@ -34,12 +34,12 @@ export const MoorhenSailsModal = (props: moorhen.CollectedProps) => {
 
     const body = (style: CSSProperties) => <div style={style} >
                                 <Row className={"big-validation-tool-container-row"}>
-                                    <MoorhenSailsBuilding {...props}/>
+                                    <MoorhenSailsFindSites {...props}/>
                                 </Row>
                             </div> 
 
     return <MoorhenDraggableModalBase
-                modalId={modalKeys.SAILS}
+                modalId={modalKeys.GLYCO}
                 left={width / 6}
                 top={height / 3}
                 minHeight={convertViewtoPx(30, height)}
@@ -49,19 +49,19 @@ export const MoorhenSailsModal = (props: moorhen.CollectedProps) => {
                 enforceMaxBodyDimensions={true}
                 overflowY='auto'
                 overflowX='auto'
-                headerTitle={header("Carbohydrate building with Sails")}
+                headerTitle={header("Find potential glycosylation sites with Sails")}
                 footer={null}
                 resizeNodeRef={resizeNodeRef}
                 body={ body({ height: '100%' }) }
                 additionalHeaderButtons={[
                     <Tooltip title={"Move to side panel"}  key={2}>
                         <Button variant='white' style={{margin: '0.1rem', padding: '0.1rem'}} onClick={() => {
-                            dispatch( hideModal(modalKeys.SAILS) )
-                            enqueueSnackbar(modalKeys.SAILS, {
+                            dispatch( hideModal(modalKeys.GLYCO) )
+                            enqueueSnackbar(modalKeys.GLYCO, {
                                 variant: "sideBar",
                                 persist: true,
                                 anchorOrigin: {horizontal: "right", vertical: "bottom"},
-                                modalId: modalKeys.SAILS,
+                                modalId: modalKeys.GLYCO,
                                 title: header("Sails"),
                                 children: body({ overflowY: 'scroll', overflowX: "hidden", maxHeight: '30vh' })
                             })

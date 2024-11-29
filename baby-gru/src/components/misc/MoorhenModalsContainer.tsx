@@ -12,7 +12,7 @@ import { MoorhenMmrrccModal } from '../modal/MoorhenMmrrccModal';
 import { MoorhenWaterValidationModal } from '../modal/MoorhenWaterValidationModal';
 import { MoorhenLigandValidationModal } from '../modal/MoorhenLigandValidationModal';
 import { MoorhenCarbohydrateValidationModal } from '../modal/MoorhenCarbohydrateValidationModal';
-import { MoorhenSailsModal } from '../modal/MoorhenSailsModal';
+import { MoorhenSailsFindSitesModal } from '../modal/MoorhenSailsModal';
 import { MoorhenPepFlipsModal } from '../modal/MoorhenPepFlipsModal';
 import { MoorhenUnmodelledBlobsModal } from '../modal/MoorhenUnmodelledBlobsModal';
 import { MoorhenFillPartialResiduesModal } from '../modal/MoorhenFillPartialResiduesModal';
@@ -41,7 +41,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
     const showPepFlipsValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.PEPTIDE_FLIPS))
     const showUnmodelledBlobsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.UNMODELLED_BLOBS))
     const showCarbohydrateValidationModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.CARB_VALIDATION))
-    const showSailsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SAILS))
+    const showSailsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.GLYCO))
     const showSliceNDiceModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SLICE_N_DICE))
     const showSuperposeModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SUPERPOSE_MODELS))
     const showSceneSettingsModal = useSelector((state: moorhen.State) => state.modals.activeModals.includes(modalKeys.SCENE_SETTINGS))
@@ -102,7 +102,7 @@ export const MoorhenModalsContainer = (props: moorhen.CollectedProps) => {
         }
 
         {showSailsModal &&
-            <MoorhenSailsModal {...props} />
+            <MoorhenSailsFindSitesModal {...props} />
         }
 
         {showPepFlipsValidationModal &&

@@ -8,23 +8,29 @@ import {sails} from "../../types/sails";
 export const MoorhenSailsCard = (props: {
     details: sails.SiteResult;
     molecule: moorhen.Molecule;
+    selectedModel: number;
+    selectedMap: number
 }) => {
 
     const width = useSelector((state: moorhen.State) => state.sceneSettings.width)
+    const molecules = useSelector((state: moorhen.State) => state.molecules.moleculeList)
+    const maps = useSelector((state: moorhen.State) => state.maps)
 
-    const {details, molecule} = props
+    const {details, molecule, selectedModel, selectedMap} = props
 
     const handleClick = useCallback(async (key: string) => {
         if (key === "") {
             return
         }
+        const selectedMolecule = molecules.find(molecule => molecule.molNo === selectedModel)
+        const selectedMoorhenMap = maps.find(map => map.molNo === selectedMap)
+
         const [chain, name, seqid] = key.split("/");
         const newCenterString = `${chain}/${seqid}(${name})`
         await molecule.centreOn(newCenterString, true, true);
-
-        // if (e.target.dataset?.chainid && e.target.dataset?.seqnum && e.target.dataset?.resname && molecule !== null) {
-        //     const newCenterString = `${e.target.dataset.chainid}/${e.target.dataset.seqnum}(${e.target.dataset.resname})`
-        // }
+        const reflectionFileName: string = selectedMoorhenMap.associatedReflectionFileName;
+        const result = await selectedMolecule.getSailsModel(reflectionFileName, chain, Number(seqid));
+        selectedMolecule.redraw();
     }, []);
 
     const [isHovered, setIsHovered] = useState(false);
