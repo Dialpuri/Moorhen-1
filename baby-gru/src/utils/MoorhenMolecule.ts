@@ -2347,6 +2347,15 @@ export class MoorhenMolecule implements moorhen.Molecule {
         return result.data.result.result;
     }
 
+    async getSailsModel(reflectionFileName: string, chain: string, seqid: number): Promise<any> {
+        const result = await this.commandCentre.current.cootCommand({
+            command: 'sails_model',
+            commandArgs: [this.molNo, reflectionFileName, chain, seqid],
+            returnType: 'string',
+        })
+        return result.data.result.result;
+    }
+
     /**
      * Get SVG descriptions for the ligands in this molecule instance
      * @param {string} resName - The name of the ligand to get SVG descriptions for
