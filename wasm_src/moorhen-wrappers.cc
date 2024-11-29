@@ -322,6 +322,13 @@ class molecules_container_js : public molecules_container_t {
             return results;
         }
 
+        std::string sails_model(int imol, const std::string& reflections_file_name, const std::string& chain, int seqid) {
+            auto file_content = molecules_container_t::molecule_to_mmCIF_string(imol);
+            auto results = sails_test(file_content, reflections_file_name, chain, seqid);
+            replace_molecule_by_model_from_string(imol, results);
+            return "";
+        }
+
         coot::simple_mesh_t DrawMoorhenMetaBalls(int imol, const std::string &cid_str, float gridSize, float radius, float isoLevel) {
             mmdb::Manager *mol = get_mol(imol);
             return GenerateMoorhenMetaBalls(mol,cid_str,gridSize,radius,isoLevel);
@@ -1631,6 +1638,7 @@ EMSCRIPTEN_BINDINGS(my_module) {
     .function("DrawGlycoBlocks",&molecules_container_js::DrawGlycoBlocks)
     .function("privateer_validate",&molecules_container_js::privateer_validate)
     .function("get_sails_glycosites",&molecules_container_js::get_sails_glycosites)
+    .function("sails_model",&molecules_container_js::sails_model)
     .function("GetSecondaryStructure",&molecules_container_js::GetSecondaryStructure)
     .function("DrawMoorhenMetaBalls",&molecules_container_js::DrawMoorhenMetaBalls)
     .function("model_has_glycans",&molecules_container_js::model_has_glycans)
