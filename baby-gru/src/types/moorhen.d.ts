@@ -31,6 +31,7 @@ export namespace moorhen {
         modelName: string;
         cid: string;
         svg?: string;
+        smiles?: string;
         chem_comp_info?: {first: string; second: string}[];
     }
     
@@ -81,6 +82,9 @@ export namespace moorhen {
         smoothness: number;
         width: number;
         atomRadiusBondRatio: number;
+        showAniso: boolean;
+        showOrtep: boolean;
+        showHs: boolean;
     }
 
     type gaussianSurfSettings = {
