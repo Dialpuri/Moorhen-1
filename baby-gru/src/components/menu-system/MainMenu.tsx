@@ -4,7 +4,7 @@ import { useMoorhenInstance } from "@/InstanceManager";
 import { setShownSidePanel, showModal } from "@/store";
 import { RootState } from "../../store/MoorhenReduxStore";
 import { setMainMenuOpen, setSearchBarActive } from "../../store/globalUISlice";
-import { MoorhenIcon, MoorhenSVG } from "../icons";
+import { MoorhenIcon } from "../icons";
 import { MoorhenClickAwayListener } from "../interface-base/utils/ClickAwayListener";
 import { MenuFromItems } from "./MenuFromItems";
 import { MoorhenSearchBar } from "./SearchBar";
@@ -15,14 +15,24 @@ export const MoorhenMainMenu = memo(() => {
     const isOpen = useSelector((state: RootState) => state.globalUI.isMainMenuOpen);
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const isDevMode = useSelector((state: RootState) => state.generalStates.devMode);
-    const GLViewportHeight = useSelector((state: RootState) => state.sceneSettings.GlViewportHeight);
     const dispatch = useDispatch();
     const moorhenInstance = useMoorhenInstance();
     const menuSystem = moorhenInstance.menuSystem;
 
     const menuVersion = useMenuHook();
 
-    const handleMainMenuToggle = () => {
+    const handleClickAway = (event: MouseEvent | TouchEvent) => {
+        const target = event.target as HTMLElement | null;
+        if (target?.closest(".moorhen__toolbar-item")) return;
+        setActiveMenu(null);
+    };
+
+    const handleBrandClick = () => {
+        // Brand button only acts as a collapse toggle in the narrow vertical layout.
+        // In the wide horizontal toolbar there's nothing meaningful to collapse, so it's a no-op.
+        const isNarrow = typeof window !== "undefined" && window.matchMedia("(max-width: 960px)").matches;
+        if (!isNarrow) return;
+
         if (isOpen) {
             setActiveMenu(null);
         } else {
@@ -30,50 +40,23 @@ export const MoorhenMainMenu = memo(() => {
         }
         dispatch(setMainMenuOpen(!isOpen));
     };
-    const handleClickAway = event => {
-        if ((event.target as HTMLElement).closest(".moorhen__main-menu-buttons-container")) return;
-        setActiveMenu(null);
-    };
 
     const main_menu_config = menuSystem.mainMenuMap;
 
-    const subMenu = useMemo(() => {
-        if (!activeMenu || !isOpen) return null;
-
-        const menuEntry = Object.values(main_menu_config).find(m => m.label === activeMenu);
-
-        if (menuEntry) {
-            if (menuEntry.type === "sub-menu") {
-                const style = menuEntry.align ? { top: `${menuEntry.align * 1.5}rem` } : {};
-                const menuItems = menuSystem.getItems(menuEntry.menu);
-                return (
-                    <div key={menuEntry.label} className="moorhen__sub-menu-container" style={style}>
-                        <MenuFromItems menuItemList={menuItems} title={menuEntry.label} />
-                    </div>
-                );
-            } else if (menuEntry.type === "jsx") {
-                const style = menuEntry.align ? { top: `${menuEntry.align * 1.5}rem` } : { top: "5rem" };
-                return (
-                    <div key={menuEntry.label} className="moorhen__sub-menu-container" style={style}>
-                        {menuEntry.component}
-                    </div>
-                );
-            }
-        } else {
-            return null;
-        }
-    }, [activeMenu, isOpen, menuSystem, menuVersion]);
-
-    const menu = useMemo(() => {
-        if (!isOpen) return null;
+    const toolbarItems = useMemo(() => {
         const handleClick = (label: string) => {
             setActiveMenu(current => (current === label ? null : label));
+            dispatch(setSearchBarActive(false));
         };
 
-        const buttonsList = Object.entries(main_menu_config).map(([key, menu]) => {
+        return Object.entries(main_menu_config).map(([key, menu]) => {
             if (menu.label === "Dev tools" && !isDevMode) {
                 return null;
             }
+
+            const isActive = activeMenu === menu.label;
+            const isOpenable = menu.type === "sub-menu" || menu.type === "jsx";
+
             const onClick = () => {
                 if (menu.type === "sub-menu" || menu.type === "jsx") {
                     handleClick(menu.label);
@@ -85,51 +68,66 @@ export const MoorhenMainMenu = memo(() => {
                     dispatch(setShownSidePanel(menu.panel));
                 }
             };
-            return <MainMenuButton key={key} icon={menu.icon} label={menu.label} onClick={onClick} />;
-        });
 
-        return <div className="moorhen__main-menu-buttons-container">{buttonsList}</div>;
-    }, [isOpen, isDevMode, menuSystem, menuVersion]);
+            let dropdown: React.JSX.Element | null = null;
+            if (isActive && isOpenable) {
+                if (menu.type === "sub-menu") {
+                    const menuItems = menuSystem.getItems(menu.menu);
+                    dropdown = (
+                        <div className="moorhen__toolbar-dropdown">
+                            <MenuFromItems menuItemList={menuItems} title={menu.label} />
+                        </div>
+                    );
+                } else if (menu.type === "jsx") {
+                    dropdown = <div className="moorhen__toolbar-dropdown">{menu.component}</div>;
+                }
+            }
+
+            return (
+                <div className={`moorhen__toolbar-item${isActive ? " active" : ""}`} key={key}>
+                    <button
+                        type="button"
+                        className={`moorhen__toolbar-button${isActive ? " active" : ""}`}
+                        onClick={onClick}
+                        aria-haspopup={isOpenable ? "menu" : undefined}
+                        aria-expanded={isOpenable ? isActive : undefined}
+                    >
+                        {"icon" in menu && menu.icon ? (
+                            <span className="moorhen__toolbar-icon">
+                                <MoorhenIcon moorhenSVG={menu.icon} alt={menu.label} />
+                            </span>
+                        ) : null}
+                        <span className="moorhen__toolbar-label">{menu.label}</span>
+                    </button>
+                    {dropdown}
+                </div>
+            );
+        });
+    }, [activeMenu, isDevMode, menuSystem, menuVersion]);
 
     return (
-        <div className="moorhen__main-menu-scroll" style={{ height: GLViewportHeight - 10 }}>
-            {/* moorhen__main-menu-scroll have these CSS properties that will propagate and cause bugs: 
-            direction: ltr 
-            pointer-events: none;
-            children needs:
-            direction: rtl
-            pointer-events: auto;            
-            */}
-
-            <MoorhenSearchBar />
-            <div className="moorhen__main-menu">
-                <button className="moorhen__main-menu-toggle" onClick={handleMainMenuToggle}>
-                    {isOpen ? (
-                        <MoorhenIcon moorhenSVG={`MatSymClose`} className="moorhen__icon menu" alt="Menu" />
-                    ) : (
-                        <MoorhenIcon moorhenSVG={`MatSymMenu`} className="moorhen__icon menu" alt="Menu" />
-                    )}
-                    &nbsp;&nbsp;
-                    <MoorhenIcon moorhenSVG={`MoorhenLogo`} alt="Maps" className="moorhen__main-logo" />
+        <MoorhenClickAwayListener onClickAway={handleClickAway}>
+            <div
+                className={`moorhen__toolbar${isOpen ? "" : " moorhen__toolbar--collapsed"}`}
+                role="toolbar"
+                aria-label="Main menu"
+            >
+                <button
+                    type="button"
+                    className="moorhen__toolbar-brand"
+                    onClick={handleBrandClick}
+                    aria-label="Toggle main menu"
+                    aria-expanded={isOpen}
+                >
+                    <MoorhenIcon moorhenSVG="MoorhenLogo" alt="Moorhen" className="moorhen__toolbar-brand-logo" />
+                    <span className="moorhen__toolbar-brand-name">Moorhen</span>
                 </button>
-                <div className="moorhen__main-menu-container">
-                    {menu}
-                    {subMenu ? (
-                        <MoorhenClickAwayListener onClickAway={event => handleClickAway(event)}>{subMenu}</MoorhenClickAwayListener>
-                    ) : null}
+                <div className="moorhen__toolbar-right">
+                    <MoorhenSearchBar />
                 </div>
+                <div className="moorhen__toolbar-items">{toolbarItems}</div>
             </div>
-        </div>
+        </MoorhenClickAwayListener>
     );
 });
 MoorhenMainMenu.displayName = "MoorhenMainMenu";
-
-const MainMenuButton = (props: { icon: MoorhenSVG; label: string; onClick: () => void }) => {
-    return (
-        <button className="moorhen__main-menu-button" onClick={props.onClick}>
-            <MoorhenIcon moorhenSVG={props.icon} className="moorhen__icon menu" alt={props.icon} />
-            &nbsp;&nbsp;
-            {props.label}
-        </button>
-    );
-};

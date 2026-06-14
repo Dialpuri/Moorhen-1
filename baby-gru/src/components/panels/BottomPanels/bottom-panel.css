@@ -1,7 +1,13 @@
+@import "../../../colors.css";
+
 .moorhen__bottom-panel-container {
     position: absolute;
     bottom: 0;
     left: 0;
-    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.5s var(--moorhen-easing-emphasized);
     overflow: visible;
+    background: var(--moorhen-background);
+    color: var(--moorhen-primary);
+    border-top: 1px solid var(--moorhen-border-subtle);
+    box-shadow: var(--moorhen-shadow-md);
 }

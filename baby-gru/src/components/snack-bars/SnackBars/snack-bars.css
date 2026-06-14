@@ -5,7 +5,7 @@
     flex-direction: column;
     position: relative;
     left: 25%;
-    top: 1rem;
+    top: 3.25rem; /* clear the horizontal toolbar */
     max-width: 50%;
     z-index: 1000;
     max-height: 500px;
@@ -15,6 +15,7 @@
     user-select: text;
     justify-content: center;
     align-items: center;
+    gap: var(--moorhen-space-2);
 }
 
 .moorhen__snack-bar-wrapper {
@@ -26,49 +27,46 @@
     width: fit-content;
     align-items: center;
     justify-content: center;
-    padding: 0.5rem 1rem;
-    min-height: 2.5rem;
-    color: var(--moorhen-primary);
-    background-color: var(--moorhen-background-header);
-    /* border: 1px solid var(--moorhen-border); */
-    border-radius: 0.25rem;
-    box-shadow: 2px 2px 4px 3px var(--moorhen-focus-shadow);
-    margin-bottom: 0.5rem;
+    padding: var(--moorhen-space-2) var(--moorhen-space-4);
+    min-height: 2.25rem;
+    color: var(--moorhen-secondary);
+    background-color: var(--moorhen-primary);
+    border-radius: var(--moorhen-radius-md);
+    box-shadow: var(--moorhen-shadow-md);
     overflow: hidden;
-    font-weight: 500;
-    color: white;
+    font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
+    font-weight: var(--moorhen-font-weight-medium);
 }
 
 .moorhen__snack-bar.success {
-    background-color: #1faf30;
-    /* background-color: var(--moorhen-background); */
-    /* border: 2px solid #22bb33; */
+    background-color: var(--moorhen-success);
+    color: var(--moorhen-secondary);
 }
 
 .moorhen__snack-bar.error {
-    background-color: #bb2124;
-    /* background-color: var(--moorhen-background); */
-    /* border: 2px solid #bb2124; */
+    background-color: var(--moorhen-error);
+    color: var(--moorhen-secondary);
 }
 
 .moorhen__snack-bar.warning {
-    background-color: #e78700;
-    /* background-color: var(--moorhen-background); */
-    /* border: 2px solid #da983c; */
+    background-color: var(--moorhen-warning);
+    color: var(--moorhen-primary);
 }
 
 .moorhen__snack-bar.info {
-    background-color: #1a87a5;
-    /* background-color: var(--moorhen-background); */
-    /* border: 2px solid #70afc0; */
+    background-color: var(--moorhen-button-background);
+    color: var(--moorhen-secondary);
 }
 
 @keyframes moorhen__snack-bar-fadeIn {
     from {
         opacity: 0;
+        transform: translateY(-4px);
     }
     to {
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
@@ -87,5 +85,12 @@
     }
     to {
         max-height: 0;
+    }
+}
+
+@media (max-width: 960px) {
+    /* Toolbar moves to the left side, so snackbars can sit at the top again */
+    .moorhen__snack-bars-container {
+        top: 1rem;
     }
 }

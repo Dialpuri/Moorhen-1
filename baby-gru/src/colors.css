@@ -1,55 +1,144 @@
 :host,
 :root {
-    /* Font */
-    --moorhen-font-family: Inter, sans-serif;
+    /* ============================================ */
+    /* TYPOGRAPHY                                   */
+    /* ============================================ */
+    --moorhen-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --moorhen-font-family-mono: ui-monospace, "SF Mono", "JetBrains Mono", "Cascadia Code", Menlo, Consolas, monospace;
+
+    --moorhen-font-size-xs: 0.75rem;   /* 12px */
+    --moorhen-font-size-sm: 0.8125rem; /* 13px */
+    --moorhen-font-size-md: 0.875rem;  /* 14px */
+    --moorhen-font-size-base: 0.9375rem; /* 15px */
+    --moorhen-font-size-lg: 1rem;      /* 16px */
+    --moorhen-font-size-xl: 1.125rem;  /* 18px */
+    --moorhen-font-size-2xl: 1.25rem;  /* 20px */
+
+    --moorhen-font-weight-regular: 400;
+    --moorhen-font-weight-medium: 500;
+    --moorhen-font-weight-semibold: 600;
+    --moorhen-font-weight-bold: 700;
+
+    --moorhen-line-height-tight: 1.25;
+    --moorhen-line-height-base: 1.5;
 
     /* ============================================ */
-    /* BASE PALETTE - Define only these core colors */
+    /* SPACING SCALE (4px grid)                     */
     /* ============================================ */
-    --base-neutral-hue: 30;
-    --base-accent-hue: 245;
-    --base-error-hue: 355;
-    --base-warning-hue: 45;
+    --moorhen-space-1: 0.25rem;  /*  4px */
+    --moorhen-space-2: 0.5rem;   /*  8px */
+    --moorhen-space-3: 0.75rem;  /* 12px */
+    --moorhen-space-4: 1rem;     /* 16px */
+    --moorhen-space-5: 1.25rem;  /* 20px */
+    --moorhen-space-6: 1.5rem;   /* 24px */
+    --moorhen-space-8: 2rem;     /* 32px */
+
+    /* ============================================ */
+    /* RADII                                        */
+    /* ============================================ */
+    --moorhen-radius-xs: 0.25rem;  /*  4px */
+    --moorhen-radius-sm: 0.375rem; /*  6px */
+    --moorhen-radius-md: 0.5rem;   /*  8px */
+    --moorhen-radius-lg: 0.75rem;  /* 12px */
+    --moorhen-radius-xl: 1rem;     /* 16px */
+    --moorhen-radius-pill: 999px;
+
+    /* ============================================ */
+    /* MOTION                                       */
+    /* ============================================ */
+    --moorhen-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+    --moorhen-easing-emphasized: cubic-bezier(0.3, 0, 0, 1);
+    --moorhen-duration-fast: 120ms;
+    --moorhen-duration-base: 180ms;
+    --moorhen-duration-slow: 260ms;
+
+    /* ============================================ */
+    /* BASE PALETTE - tune these to reskin           */
+    /* ============================================ */
+    /* Cooler, slightly desaturated neutral for a scientific feel */
+    --base-neutral-hue: 220;
+    --base-neutral-saturation: 14%;
+
+    /* Refined indigo accent — still vivid but less candy-bright */
+    --base-accent-hue: 232;
+    --base-accent-saturation: 76%;
+
+    --base-error-hue: 0;
+    --base-warning-hue: 38;
+    --base-success-hue: 152;
 
     /* Core colors */
-    --base-accent: hsl(var(--base-accent-hue) 92% 53%);
-    --base-error: hsl(var(--base-error-hue) 67% 53%);
-    --base-warning: hsl(var(--base-warning-hue) 100% 51%);
+    --base-accent: hsl(var(--base-accent-hue) var(--base-accent-saturation) 56%);
+    --base-error: hsl(var(--base-error-hue) 70% 52%);
+    --base-warning: hsl(var(--base-warning-hue) 92% 50%);
+    --base-success: hsl(var(--base-success-hue) 56% 42%);
 
     /* ============================================ */
-    /* CALCULATED COLORS - Derived from base palette */
+    /* LIGHT THEME SURFACES                          */
     /* ============================================ */
+    /* Text colors */
+    --moorhen-primary: hsl(var(--base-neutral-hue) 22% 12%);
+    --moorhen-secondary: hsl(var(--base-neutral-hue) 12% 98%);
+    --moorhen-text-muted: hsl(var(--base-neutral-hue) 10% 42%);
+    --moorhen-text-subtle: hsl(var(--base-neutral-hue) 10% 58%);
 
-    /* Text and surface colors */
-    --moorhen-primary: hsl(var(--base-neutral-hue) 11% 15%);
-    --moorhen-secondary: hsl(var(--base-neutral-hue) 11% 98%);
-    --moorhen-background: hsl(var(--base-neutral-hue) 0% 97%);
-    --moorhen-background-shaded: hsl(var(--base-neutral-hue) 0% 85%);
-    --moorhen-background-header: hsl(var(--base-neutral-hue) 0% 90%);
-    --moorhen-background-header-secondary: hsl(var(--base-neutral-hue) 0% 76%);
-    --moorhen-border: hsl(var(--base-neutral-hue) 7% 59%);
+    /* Surfaces (light to dark progression) */
+    --moorhen-background: hsl(var(--base-neutral-hue) 18% 99%);
+    --moorhen-background-shaded: hsl(var(--base-neutral-hue) 16% 96%);
+    --moorhen-background-header: hsl(var(--base-neutral-hue) 16% 96%);
+    --moorhen-background-header-secondary: hsl(var(--base-neutral-hue) 14% 90%);
     --moorhen-input-background: hsl(var(--base-neutral-hue) 0% 100%);
-    --moorhen-middle: hsl(var(--base-neutral-hue) 0% 83%);
-    --moorhen-disabled: hsl(var(--base-neutral-hue) 7% 46%);
+    --moorhen-middle: hsl(var(--base-neutral-hue) 14% 86%);
+
+    /* Borders */
+    --moorhen-border: hsl(var(--base-neutral-hue) 14% 88%);
+    --moorhen-border-strong: hsl(var(--base-neutral-hue) 14% 78%);
+    --moorhen-border-subtle: hsl(var(--base-neutral-hue) 14% 93%);
+
+    /* States */
+    --moorhen-disabled: hsl(var(--base-neutral-hue) 8% 62%);
 
     /* Accent colors */
     --moorhen-accent: var(--base-accent);
-    --moorhen-focus: hsl(var(--base-accent-hue) 88% 76%);
+    --moorhen-accent-soft: hsl(var(--base-accent-hue) var(--base-accent-saturation) 96%);
+    --moorhen-focus: hsl(var(--base-accent-hue) 80% 64%);
     --moorhen-error: var(--base-error);
-    --moorhen-danger: hsl(var(--base-error-hue) 50% 51%);
+    --moorhen-danger: hsl(var(--base-error-hue) 65% 48%);
     --moorhen-warning: var(--base-warning);
+    --moorhen-success: var(--base-success);
 
     /* Button colors */
-    --moorhen-button-background: hsl(var(--base-accent-hue) 48% 52%);
-    --moorhen-button-background-secondary: hsl(var(--base-accent-hue) 26% 57%);
+    --moorhen-button-background: hsl(var(--base-accent-hue) 64% 52%);
+    --moorhen-button-background-hover: hsl(var(--base-accent-hue) 64% 47%);
+    --moorhen-button-background-secondary: hsl(var(--base-neutral-hue) 12% 92%);
+    --moorhen-button-background-secondary-hover: hsl(var(--base-neutral-hue) 12% 87%);
     --moorhen-button-text: var(--moorhen-secondary);
+    --moorhen-button-text-secondary: var(--moorhen-primary);
 
-    /* Shadow colors - calculated with opacity */
-    --moorhen-shadow-shape: 2px 2px 4px 1px;
-    --moorhen-focus-shadow: hsl(var(--base-accent-hue) 68% 50% / 0.25);
-    --moorhen-error-shadow: hsl(var(--base-error-hue) 50% 42% / 0.25);
-    --moorhen-inactive-shadow: hsl(0 0% 0% / 0.2);
-    --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
+    /* ============================================ */
+    /* SHADOWS (subtle, layered)                     */
+    /* ============================================ */
+    --moorhen-shadow-xs: 0 1px 2px hsl(var(--base-neutral-hue) 30% 8% / 0.05);
+    --moorhen-shadow-sm:
+        0 1px 2px hsl(var(--base-neutral-hue) 30% 8% / 0.06),
+        0 1px 1px hsl(var(--base-neutral-hue) 30% 8% / 0.04);
+    --moorhen-shadow-md:
+        0 4px 8px hsl(var(--base-neutral-hue) 30% 8% / 0.06),
+        0 1px 3px hsl(var(--base-neutral-hue) 30% 8% / 0.05);
+    --moorhen-shadow-lg:
+        0 12px 24px hsl(var(--base-neutral-hue) 30% 8% / 0.08),
+        0 4px 8px hsl(var(--base-neutral-hue) 30% 8% / 0.05);
+    --moorhen-shadow-xl:
+        0 20px 40px hsl(var(--base-neutral-hue) 30% 8% / 0.10),
+        0 8px 16px hsl(var(--base-neutral-hue) 30% 8% / 0.06);
+
+    /* Legacy shadow tokens — kept so existing CSS continues to work */
+    --moorhen-shadow-shape: 0 1px 2px 0;
+    --moorhen-focus-shadow: hsl(var(--base-accent-hue) var(--base-accent-saturation) 52% / 0.25);
+    --moorhen-focus-ring: hsl(var(--base-accent-hue) var(--base-accent-saturation) 52% / 0.32);
+    --moorhen-error-shadow: hsl(var(--base-error-hue) 65% 48% / 0.22);
+    --moorhen-inactive-shadow: hsl(var(--base-neutral-hue) 30% 8% / 0.08);
+    --moorhen-shadow-focus-style: 0 0 0 3px var(--moorhen-focus-ring);
 
     /* Icon brightness */
     --moorhen-icon-brightness: 0.15;
@@ -57,84 +146,57 @@
 
 :host([data-theme="dark"]),
 [data-theme="dark"] {
-    /* Dark theme - only adjust lightness values */
-    --moorhen-primary: hsl(var(--base-neutral-hue) 0% 87%);
-    --moorhen-secondary: hsl(var(--base-neutral-hue) 11% 15%);
-    --moorhen-background: hsl(var(--base-neutral-hue) 4% 18%);
-    --moorhen-background-shadded: hsl(var(--base-neutral-hue) 4% 35%);
-    --moorhen-background-header: hsl(var(--base-neutral-hue) 0% 38%);
-    --moorhen-background-header-secondary: hsl(var(--base-neutral-hue) 0% 43%);
-    --moorhen-border: hsl(var(--base-neutral-hue) 10% 81%);
-    --moorhen-input-background: hsl(var(--base-neutral-hue) 0% 21%);
-    --moorhen-disabled: hsl(var(--base-neutral-hue) 7% 46%);
+    /* Dark theme — surfaces */
+    --moorhen-primary: hsl(var(--base-neutral-hue) 12% 92%);
+    --moorhen-secondary: hsl(var(--base-neutral-hue) 22% 10%);
+    --moorhen-text-muted: hsl(var(--base-neutral-hue) 10% 70%);
+    --moorhen-text-subtle: hsl(var(--base-neutral-hue) 10% 55%);
 
-    /* Button colors for dark theme */
-    --moorhen-button-background: hsl(var(--base-accent-hue) 32% 51%);
-    --moorhen-button-background-secondary: hsl(var(--base-accent-hue) 26% 57%);
-    --moorhen-button-text: hsl(var(--base-neutral-hue) 11% 98%);
+    --moorhen-background: hsl(var(--base-neutral-hue) 16% 13%);
+    --moorhen-background-shaded: hsl(var(--base-neutral-hue) 14% 18%);
+    --moorhen-background-shadded: hsl(var(--base-neutral-hue) 14% 18%); /* legacy typo */
+    --moorhen-background-header: hsl(var(--base-neutral-hue) 14% 18%);
+    --moorhen-background-header-secondary: hsl(var(--base-neutral-hue) 14% 24%);
+    --moorhen-input-background: hsl(var(--base-neutral-hue) 14% 16%);
+    --moorhen-middle: hsl(var(--base-neutral-hue) 14% 26%);
 
-    /* Shadow colors for dark theme */
-    --moorhen-focus-shadow: hsl(var(--base-accent-hue) 92% 53% / 0.25);
-    --moorhen-error-shadow: hsl(var(--base-error-hue) 67% 53% / 0.25);
-    --moorhen-inactive-shadow: hsl(0 0% 65% / 0.397);
+    --moorhen-border: hsl(var(--base-neutral-hue) 14% 26%);
+    --moorhen-border-strong: hsl(var(--base-neutral-hue) 14% 34%);
+    --moorhen-border-subtle: hsl(var(--base-neutral-hue) 14% 22%);
+
+    --moorhen-disabled: hsl(var(--base-neutral-hue) 8% 42%);
+
+    --moorhen-accent-soft: hsl(var(--base-accent-hue) 35% 22%);
+    --moorhen-focus: hsl(var(--base-accent-hue) 80% 68%);
+
+    /* Buttons in dark mode */
+    --moorhen-button-background: hsl(var(--base-accent-hue) 56% 56%);
+    --moorhen-button-background-hover: hsl(var(--base-accent-hue) 56% 62%);
+    --moorhen-button-background-secondary: hsl(var(--base-neutral-hue) 14% 24%);
+    --moorhen-button-background-secondary-hover: hsl(var(--base-neutral-hue) 14% 30%);
+    --moorhen-button-text: hsl(var(--base-neutral-hue) 12% 98%);
+    --moorhen-button-text-secondary: hsl(var(--base-neutral-hue) 12% 95%);
+
+    /* Shadow colors for dark theme — slightly stronger ambient because dark surfaces hide soft shadows */
+    --moorhen-shadow-xs: 0 1px 2px hsl(0 0% 0% / 0.30);
+    --moorhen-shadow-sm:
+        0 1px 2px hsl(0 0% 0% / 0.35),
+        0 1px 1px hsl(0 0% 0% / 0.22);
+    --moorhen-shadow-md:
+        0 4px 8px hsl(0 0% 0% / 0.40),
+        0 1px 3px hsl(0 0% 0% / 0.24);
+    --moorhen-shadow-lg:
+        0 12px 24px hsl(0 0% 0% / 0.50),
+        0 4px 8px hsl(0 0% 0% / 0.30);
+    --moorhen-shadow-xl:
+        0 20px 40px hsl(0 0% 0% / 0.55),
+        0 8px 16px hsl(0 0% 0% / 0.35);
+
+    --moorhen-focus-shadow: hsl(var(--base-accent-hue) 80% 68% / 0.30);
+    --moorhen-focus-ring: hsl(var(--base-accent-hue) 80% 68% / 0.38);
+    --moorhen-error-shadow: hsl(var(--base-error-hue) 65% 56% / 0.30);
+    --moorhen-inactive-shadow: hsl(0 0% 0% / 0.45);
 
     /* Icon brightness for dark theme */
     --moorhen-icon-brightness: 0.9;
 }
-
-/* 
-
-:host,
-:root {
-    /* Moorhen specific colors 
-    --moorhen-primary: #212529;
-    --moorhen-secondary: #f8f9fa;
-    --moorhen-background: #f7f7f7;
-    --moorhen-background-header: #e6e6e6;
-    --moorhen-background-header-secondary: #c3c3c3;
-    --moorhen-border: #898f96;
-    --moorhen-input-background: rgb(255, 255, 255);
-    --moorhen-accent: #0d6efd;
-    --moorhen-focus: #86b7fe;
-    --moorhen-middle: #d3d3d3;
-    --moorhen-error: #dc3545;
-    --moorhen-disabled: #6c757d;
-    --moorhen-danger: #ca3f3f;
-    --moorhen-warning: #ffc107;
-
-    /* Button 
-    --moorhen-button-background: #4578c4;
-    --moorhen-button-background-secondary: #7387a5;
-    --moorhen-button-text: var(--moorhen-secondary);
-
-    /* Shadow colors 
-    --moorhen-shadow-shape: 2px 2px 4px 1px;
-    --moorhen-focus-shadow: rgba(46, 112, 211, 0.25);
-    --moorhen-error-shadow: rgba(161, 53, 98, 0.25);
-    --moorhen-inactive-shadow: rgba(0, 0, 0, 0.1);
-
-    /* Icon brightness 
-    --moorhen-icon-brightness: 0.15;
-    --moorhen-shadow-focus-style: 2px 2px 4px 3px var(--moorhen-focus-shadow);
-
-    --moorhen-font-family: Inter, sans-serif;
-}
-
-:host([data-theme="dark"]),
-[data-theme="dark"] {
-    /* Moorhen specific colors for dark theme 
-    --moorhen-primary: #dddddd;
-    --moorhen-background: #2c2e30;
-    --moorhen-background-header: #606060;
-    --moorhen-border: #c6cfd8;
-    --moorhen-input-background: rgba(255, 255, 255, 0.1);
-    --moorhen-disabled: #6c757d;
-
-    /* Shadow colors for dark theme 
-    --moorhen-focus-shadow: rgba(13, 110, 253, 0.25);
-    --moorhen-error-shadow: rgba(220, 53, 69, 0.25);
-    --moorhen-inactive-shadow: rgba(255, 255, 255, 0.15);
-
-    /* Icon brightness 
-    --moorhen-icon-brightness: 0.9;
-} */

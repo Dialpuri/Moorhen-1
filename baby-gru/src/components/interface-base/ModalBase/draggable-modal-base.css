@@ -7,51 +7,66 @@
     position: absolute;
     border: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);
-    border-radius: 0.2rem;
+    color: var(--moorhen-primary);
+    border-radius: var(--moorhen-radius-lg);
     top: 0;
     left: 0;
-    box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
+    box-shadow: var(--moorhen-shadow-xl);
     font-family: var(--moorhen-font-family);
+    overflow: hidden;
+    transition:
+        box-shadow var(--moorhen-duration-base) var(--moorhen-easing-standard),
+        opacity var(--moorhen-duration-base) var(--moorhen-easing-standard);
 }
+
 .moorhen__modal-header {
     justify-content: space-between;
     display: flex;
     flex-direction: row;
     font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
+    font-weight: var(--moorhen-font-weight-semibold);
+    color: var(--moorhen-primary);
     width: 100%;
     min-width: none;
-    border-radius: 0.4em 0.4rem 0 0;
+    border-radius: 0;
     align-items: center;
     user-select: none;
     -webkit-user-select: none;
-    background-color: var(--moorhen-background-header);
-    padding: 0px;
-    margin: 0px;
-    margin-bottom: 0.5rem;
-    height: 2.5rem;
+    background-color: var(--moorhen-background);
+    border-bottom: 1px solid var(--moorhen-border-subtle);
+    padding: 0;
+    margin: 0 0 var(--moorhen-space-2) 0;
+    height: 2.75rem;
     flex-shrink: 0;
 }
 
 .moorhen__modal-draggable-button {
     all: unset;
-    padding: 0px;
-    margin: 0px;
+    padding: 0;
+    margin: 0;
     width: 100%;
     height: 100%;
-    padding-left: 2rem;
+    padding-left: var(--moorhen-space-4);
     cursor: move;
     text-align: left;
+    font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
+    font-weight: var(--moorhen-font-weight-semibold);
+    color: var(--moorhen-primary);
+    letter-spacing: -0.005em;
 }
 
 .moorhen__modal-header-buttons {
     display: flex;
-    margin-right: 0.6rem;
+    margin-right: var(--moorhen-space-2);
+    gap: 2px;
     flex-direction: row;
     align-items: center;
 }
 
 .moorhen__modal-body {
-    margin: 0.5rem;
+    margin: var(--moorhen-space-2) var(--moorhen-space-3);
     display: flex;
     justify-content: flex-start;
     flex-direction: column;
@@ -59,6 +74,7 @@
     height: auto;
     width: auto;
     flex: 1 1 auto;
+    color: var(--moorhen-primary);
 }
 
 .moorhen__modal-footer {
@@ -71,16 +87,20 @@
     height: 40px;
     max-height: 40px;
     min-height: 40px;
-    padding-right: 0.5rem;
+    padding-right: var(--moorhen-space-2);
     padding-bottom: 5px;
     margin-top: auto;
-    padding-left: 0.5rem;
+    padding-left: var(--moorhen-space-2);
+    border-top: 1px solid var(--moorhen-border-subtle);
+    background: var(--moorhen-background);
 }
 
 .moorhen__modal-footer-props {
     overflow-x: hidden;
     width: 100%;
 }
+
 .moorhen__modal-resize-button {
     flex-shrink: 0;
+    color: var(--moorhen-text-subtle);
 }

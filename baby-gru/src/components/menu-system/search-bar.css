@@ -3,76 +3,76 @@
 
 .moorhen__search-bar-closed,
 .moorhen__search-bar-open {
-    position: absolute;
+    position: relative;
     direction: ltr;
     pointer-events: auto;
-    top: 1rem;
-    left: 8rem;
     z-index: var(--z-window-base);
-    border-radius: 2rem;
+    border-radius: var(--moorhen-radius-pill);
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
-    height: 2.8rem;
-    font-size: 1rem;
+    height: 2rem;
+    font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
     cursor: default;
     display: flex;
-    padding-left: 0.5rem;
+    padding: 0 var(--moorhen-space-2);
     justify-content: left;
     align-items: center;
-    border: none;
+    border: 1px solid var(--moorhen-border);
     outline: none;
+    transition:
+        box-shadow var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        border-color var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        width var(--moorhen-duration-base) var(--moorhen-easing-emphasized);
 }
 
 .moorhen__search-bar-closed {
-    animation: expandWidth 0.2s cubic-bezier(0.4, 0, 0.2, 1) reverse forwards;
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
-    color: var(--moorhen-primary);
+    width: 2rem;
+    padding: 0;
+    justify-content: center;
 }
 
 .moorhen__search-bar-open {
-    justify-content: left;
-    border: 1px solid var(--moorhen-border);
-    padding-left: 0.5rem;
-    transition: width 0.2s;
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-active-shadow);
-    animation: expandWidth 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    width: 16rem;
+    box-shadow: var(--moorhen-shadow-sm);
+    border-color: var(--moorhen-focus);
 }
 
-@keyframes expandWidth {
-    from {
-        width: 2.8rem;
-    }
-    to {
-        width: 15rem;
-    }
-}
 .moorhen__search-bar-input {
     all: unset;
     height: 1.5rem;
-    width: 12rem;
-    background-color: var(--moorhen-input-background);
-    border-radius: 2rem;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-left: var(--moorhen-space-2);
+    font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
+    color: var(--moorhen-primary);
+    background-color: transparent;
+}
+
+.moorhen__search-bar-input::placeholder {
+    color: var(--moorhen-text-subtle);
 }
 
 .moorhen__search-menu-container {
     position: absolute;
     direction: ltr;
     pointer-events: auto;
-    left: 5rem;
-    top: 3rem;
+    right: 0;
+    top: calc(100% + 6px);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    margin-top: 1.5rem;
-    padding: 0.5rem;
+    padding: var(--moorhen-space-2);
     background-color: var(--moorhen-background);
+    color: var(--moorhen-primary);
     z-index: var(--z-menu);
     border: 1px solid var(--moorhen-border);
-    border-radius: 0.5rem;
-    min-width: 16rem;
+    border-radius: var(--moorhen-radius-lg);
+    min-width: 18rem;
     width: max-content;
     min-height: 2.5rem;
     max-height: 42rem;
-    box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
-    animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    box-shadow: var(--moorhen-shadow-lg);
+    animation: popInFade var(--moorhen-duration-base) var(--moorhen-easing-emphasized) forwards;
 }

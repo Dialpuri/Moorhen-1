@@ -1,147 +1,401 @@
 @import "../../colors.css";
 @import "../../z-indexes.css";
 
-.moorhen__main-menu-scroll {
-    pointer-events: none;
+/* ============================================================
+   Horizontal toolbar (wide viewport)
+   ============================================================ */
+
+.moorhen__toolbar {
     position: absolute;
-    overflow-y: auto;
-    overflow-x: visible;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.75rem;
     z-index: var(--z-menu-base);
-    direction: rtl;
+    display: flex;
+    align-items: center;
+    gap: var(--moorhen-space-1);
+    padding: 0 var(--moorhen-space-3);
+    background: var(--moorhen-background);
+    border-bottom: 1px solid var(--moorhen-border-subtle);
+    box-shadow: var(--moorhen-shadow-xs);
+    pointer-events: auto;
+    font-family: var(--moorhen-font-family);
+    color: var(--moorhen-primary);
+}
+
+/* Visual order: brand, items, right (search). JSX is brand, right, items. */
+.moorhen__toolbar-brand { order: 1; }
+.moorhen__toolbar-items { order: 2; }
+.moorhen__toolbar-right { order: 3; }
+
+/* Collapsed state — brand toggles this. Hide the menu items column/row. */
+.moorhen__toolbar--collapsed .moorhen__toolbar-items {
+    display: none;
+}
+
+/* ---------- Brand ---------- */
+
+.moorhen__toolbar-brand {
+    all: unset;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--moorhen-space-2);
+    padding: 0 var(--moorhen-space-3) 0 var(--moorhen-space-2);
+    height: 100%;
+    cursor: pointer;
+    border-radius: var(--moorhen-radius-sm);
+    transition: background-color var(--moorhen-duration-fast) var(--moorhen-easing-standard);
+}
+
+.moorhen__toolbar-brand:hover {
+    background: var(--moorhen-background-shaded);
+}
+
+.moorhen__toolbar-brand-logo {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.moorhen__toolbar-brand-name {
+    font-size: var(--moorhen-font-size-md);
+    font-weight: var(--moorhen-font-weight-semibold);
+    letter-spacing: -0.005em;
+    color: var(--moorhen-primary);
+}
+
+/* Subtle vertical separator between brand and menu items */
+.moorhen__toolbar-brand::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 25%;
+    height: 50%;
+    width: 1px;
+    background: var(--moorhen-border-subtle);
+}
+
+.moorhen__toolbar-brand {
+    position: relative;
+}
+
+/* ---------- Menu items ---------- */
+
+.moorhen__toolbar-items {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-left: var(--moorhen-space-2);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: visible;
+}
+
+.moorhen__toolbar-item {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.moorhen__toolbar-button {
+    all: unset;
+    box-sizing: border-box;
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--moorhen-space-2);
+    height: 2.25rem;
+    padding: 0 var(--moorhen-space-3);
+    font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
+    font-weight: var(--moorhen-font-weight-medium);
+    color: var(--moorhen-text-muted);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color var(--moorhen-duration-fast) var(--moorhen-easing-standard);
+}
+
+/* Animated underline that grows from the centre on hover / when active */
+.moorhen__toolbar-button::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    right: 50%;
+    bottom: 0.3rem;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--moorhen-accent);
+    transition:
+        left var(--moorhen-duration-base) var(--moorhen-easing-emphasized),
+        right var(--moorhen-duration-base) var(--moorhen-easing-emphasized),
+        opacity var(--moorhen-duration-fast) var(--moorhen-easing-standard);
+    opacity: 0;
+}
+
+/* Icons are hidden in the horizontal toolbar — they appear in the narrow vertical fallback */
+.moorhen__toolbar-icon {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+}
+
+.moorhen__toolbar-icon > * {
     width: 100%;
     height: 100%;
-    left: 0.5rem;
 }
 
-.moorhen__main-menu {
+.moorhen__toolbar-button:hover {
+    color: var(--moorhen-primary);
+}
+
+.moorhen__toolbar-button:hover::after {
+    left: 30%;
+    right: 30%;
+    opacity: 1;
+}
+
+.moorhen__toolbar-button.active {
+    color: var(--moorhen-accent);
+}
+
+.moorhen__toolbar-button.active::after {
+    left: 25%;
+    right: 25%;
+    opacity: 1;
+}
+
+.moorhen__toolbar-button:focus-visible {
+    outline: none;
+    color: var(--moorhen-primary);
+}
+
+.moorhen__toolbar-button:focus-visible::after {
+    left: 30%;
+    right: 30%;
+    opacity: 1;
+}
+
+/* ---------- Dropdown ---------- */
+
+.moorhen__toolbar-dropdown {
     position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
     z-index: var(--z-menu);
-    width: max-content;
-    direction: ltr;
-    width: 100%;
-}
-
-.moorhen__main-menu-container {
-    position: absolute;
-    pointer-events: auto;
-    top: 3.8rem;
-    left: 1.5rem;
-    display: flex;
-    flex-direction: row;
-    z-index: var(--z-menu-base);
-    align-items: flex-start;
-    padding: 0;
-    margin: 0;
-}
-
-.moorhen__sub-menu-container {
-    position: absolute;
-    pointer-events: auto;
-    left: 10rem;
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto;
-    margin-top: 1.5rem;
-    padding: 0.5rem;
-    background-color: var(--moorhen-background);
-    z-index: var(--z-menu);
-    border: 1px solid var(--moorhen-border);
-    border-radius: 0.5rem;
     min-width: 16rem;
     width: max-content;
-    min-height: 2.5rem;
-    max-height: 42rem;
-    box-shadow: 5px 5px 5px 2px var(--moorhen-inactive-shadow);
-    animation: popInFade 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding: var(--moorhen-space-2);
+    background-color: var(--moorhen-background);
+    color: var(--moorhen-primary);
+    border: 1px solid var(--moorhen-border);
+    border-radius: var(--moorhen-radius-lg);
+    box-shadow: var(--moorhen-shadow-lg);
+    animation: popInFade var(--moorhen-duration-base) var(--moorhen-easing-emphasized) forwards;
 }
 
 @keyframes popInFade {
     from {
         opacity: 0;
-        transform: scale(0.9);
+        transform: scale(0.97) translateY(-4px);
     }
     to {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) translateY(0);
     }
 }
 
-.moorhen__main-menu-buttons-container {
-    position: static;
-    top: 0;
-    display: flex;
-    flex-direction: column;
-    z-index: var(--z-menu-base);
-    animation: slideInFade 0.3s ease-out forwards;
+/* Keep last few dropdowns from clipping off-screen at the right edge */
+.moorhen__toolbar-item:nth-last-child(-n + 3) .moorhen__toolbar-dropdown {
+    left: auto;
+    right: 0;
 }
 
-.moorhen__main-logo {
-    width: 40px;
-    height: 40px;
-}
+/* ---------- Right cluster (search etc.) ---------- */
 
-@keyframes slideInFade {
-    from {
-        opacity: 0;
-        transform: translate(-30px, -30px);
-    }
-    to {
-        opacity: 1;
-        transform: translate(0, 0);
-    }
-}
-
-.moorhen__main-menu-button,
-.moorhen__main-menu-toggle {
-    pointer-events: auto;
-    font-family: "Roboto", "Helvetica", "Arial", sans-serif;
-    position: relative;
-    top: 0rem;
-    border-radius: 2rem;
-    border: none;
-    background: var(--moorhen-background);
-    color: var(--moorhen-primary);
-    box-shadow: 0px 3px 5px 2px var(--moorhen-inactive-shadow);
-    height: 2.8rem;
-    margin-top: 0.5rem;
+.moorhen__toolbar-right {
     display: flex;
     align-items: center;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    justify-content: left;
-    font-size: 1rem;
-    outline: none;
+    gap: var(--moorhen-space-2);
+    margin-left: auto;
+    height: 100%;
 }
 
-.moorhen__main-menu-toggle {
-    left: 0.5rem;
-    top: 0.5rem;
-    padding: 0.6rem;
-    justify-content: center;
-    transform: translate(-50px, -50px);
-    animation: slideInFade 0.3s ease-out forwards;
-}
-
-.moorhen__main-menu-button:hover,
-.moorhen__main-menu-toggle:hover {
-    background: color-mix(in srgb, var(--moorhen-focus) 20%, var(--moorhen-background));
-    box-shadow: 0px 3px 5px 2px var(--moorhen-focus-shadow);
-}
+/* ---------- Submenu title (inside dropdown) ---------- */
 
 .moorhen__submenu-title {
-    padding: 0rem;
-    margin: 0rem;
-    height: 1.5rem;
-    font-weight: bold;
+    padding: var(--moorhen-space-1) var(--moorhen-space-3) var(--moorhen-space-2) var(--moorhen-space-3);
+    margin: 0;
+    font-size: var(--moorhen-font-size-xs);
+    font-weight: var(--moorhen-font-weight-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--moorhen-text-muted);
     pointer-events: none;
     border: none;
-    border-bottom: 1px solid var(--moorhen-border);
+    border-bottom: 1px solid var(--moorhen-border-subtle);
 }
 
 .moorhen_menu-hr {
     all: unset;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+    margin: var(--moorhen-space-2) 0;
     width: 100%;
-    border-bottom: 1px solid var(--moorhen-border);
+    border-bottom: 1px solid var(--moorhen-border-subtle);
+}
+
+/* ============================================================
+   Legacy class compatibility — keep old classnames working in
+   case something else in the codebase still references them.
+   ============================================================ */
+
+.moorhen__main-menu-scroll,
+.moorhen__main-menu,
+.moorhen__main-menu-container,
+.moorhen__main-menu-buttons-container {
+    display: contents;
+}
+
+.moorhen__main-menu-toggle,
+.moorhen__main-menu-button,
+.moorhen__sub-menu-container {
+    display: none;
+}
+
+/* ============================================================
+   Narrow viewport fallback — vertical pill column on the left,
+   with search bar at the top and icons inside each pill.
+   ============================================================ */
+
+@media (max-width: 960px) {
+    .moorhen__toolbar {
+        top: var(--moorhen-space-2);
+        left: var(--moorhen-space-2);
+        right: auto;
+        height: auto;
+        max-height: calc(100% - 5rem);
+        width: max-content;
+        max-width: 80vw;
+        padding: 0;
+        background: transparent;
+        border-bottom: none;
+        box-shadow: none;
+        overflow: visible;
+
+        /* Top row: brand + search. Second row: vertical pill column. */
+        display: grid;
+        grid-template-columns: auto auto;
+        grid-template-areas:
+            "brand  search"
+            "items  items";
+        column-gap: var(--moorhen-space-2);
+        row-gap: var(--moorhen-space-2);
+        align-items: center;
+        justify-items: start;
+    }
+
+    /* Reset wide-mode order tweaks — grid areas take over */
+    .moorhen__toolbar-brand,
+    .moorhen__toolbar-items,
+    .moorhen__toolbar-right {
+        order: 0;
+    }
+
+    /* ---- Brand (top-left of column) ---- */
+    .moorhen__toolbar-brand {
+        grid-area: brand;
+        padding: var(--moorhen-space-2) var(--moorhen-space-3);
+        background: var(--moorhen-background);
+        border: 1px solid var(--moorhen-border);
+        border-radius: var(--moorhen-radius-pill);
+        box-shadow: var(--moorhen-shadow-sm);
+        height: auto;
+    }
+
+    .moorhen__toolbar-brand-logo {
+        width: 1.4rem;
+        height: 1.4rem;
+    }
+
+    /* Hide the wordmark — logo alone is enough */
+    .moorhen__toolbar-brand-name {
+        display: none;
+    }
+
+    /* ---- Search (top, next to brand) ---- */
+    .moorhen__toolbar-right {
+        grid-area: search;
+        margin-left: 0;
+        height: auto;
+        align-self: center;
+    }
+
+    /* ---- Vertical pill column ---- */
+    .moorhen__toolbar-items {
+        grid-area: items;
+        flex-direction: column;
+        align-items: stretch;
+        gap: var(--moorhen-space-1);
+        margin-left: 0;
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 16rem;
+    }
+
+    .moorhen__toolbar-item {
+        display: flex;
+        position: relative;
+    }
+
+    /* Pills with icon + text */
+    .moorhen__toolbar-button {
+        width: 100%;
+        height: 2.4rem;
+        padding: 0 var(--moorhen-space-4);
+        gap: var(--moorhen-space-3);
+        justify-content: flex-start;
+        background: var(--moorhen-background);
+        border: 1px solid var(--moorhen-border);
+        border-radius: var(--moorhen-radius-pill);
+        box-shadow: var(--moorhen-shadow-sm);
+    }
+
+    .moorhen__toolbar-button:hover {
+        background: var(--moorhen-background-shaded);
+        border-color: var(--moorhen-border-strong);
+        box-shadow: var(--moorhen-shadow-md);
+    }
+
+    .moorhen__toolbar-button.active {
+        background: var(--moorhen-accent-soft);
+        color: var(--moorhen-accent);
+        border-color: var(--moorhen-focus);
+    }
+
+    /* Show icons inside pills */
+    .moorhen__toolbar-icon {
+        display: inline-flex;
+    }
+
+    /* Dropdowns flow to the right of the active pill, not below it */
+    .moorhen__toolbar-dropdown,
+    .moorhen__toolbar-item:nth-last-child(-n + 3) .moorhen__toolbar-dropdown {
+        position: absolute;
+        top: 0;
+        left: calc(100% + var(--moorhen-space-2));
+        right: auto;
+        max-height: 80vh;
+    }
+}
+
+@media (max-width: 720px) {
+    .moorhen__toolbar {
+        max-width: 70vw;
+    }
+    .moorhen__toolbar-items {
+        max-width: 14rem;
+    }
 }

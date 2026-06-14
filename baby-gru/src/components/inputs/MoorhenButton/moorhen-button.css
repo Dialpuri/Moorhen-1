@@ -10,71 +10,172 @@
     box-shadow: none;
     box-sizing: border-box;
     color: var(--moorhen-primary);
+    border-radius: var(--moorhen-radius-sm);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition:
+        background-color var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        color var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        box-shadow var(--moorhen-duration-fast) var(--moorhen-easing-standard);
+}
+
+.moorhen__button__icon-only:hover {
+    background-color: var(--moorhen-background-shaded);
+}
+
+.moorhen__button__icon-only:focus-visible {
+    box-shadow: var(--moorhen-shadow-focus-style);
 }
 
 .moorhen__button__default,
 .moorhen__button__toggle-checked,
 .moorhen__button__toggle-unchecked {
     all: unset;
-    display: flex;
+    display: inline-flex;
     flex-direction: row;
     align-items: center;
     justify-content: center;
     width: fit-content;
-    height: 2.2rem;
-    padding: 0.4rem;
-    padding-left: 0.5rem;
-    padding-right: 0.5rem;
+    height: 2.25rem;
+    padding: 0 var(--moorhen-space-4);
     margin: 0.1rem;
     color: var(--moorhen-button-text);
     background: var(--moorhen-button-background);
-    border: 1px solid var(--moorhen-border);
-    border-radius: 0.25rem;
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
+    border: 1px solid transparent;
+    border-radius: var(--moorhen-radius-sm);
+    box-shadow: var(--moorhen-shadow-xs);
     cursor: pointer;
     box-sizing: border-box;
     font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-md);
+    font-weight: var(--moorhen-font-weight-medium);
+    letter-spacing: 0.005em;
+    line-height: 1;
     transition:
-        box-shadow 0.5s ease,
-        border-color 0.5s ease,
-        filter 0.5s ease;
+        background-color var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        box-shadow var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        border-color var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        color var(--moorhen-duration-fast) var(--moorhen-easing-standard),
+        transform var(--moorhen-duration-fast) var(--moorhen-easing-standard);
 }
 
-.moorhen__button__default.disabled {
+.moorhen__button__default:hover {
+    background: var(--moorhen-button-background-hover);
+    box-shadow: var(--moorhen-shadow-sm);
+}
+
+.moorhen__button__default:active {
+    transform: translateY(1px);
+    box-shadow: none;
+}
+
+.moorhen__button__default:focus-visible {
+    box-shadow: var(--moorhen-shadow-focus-style), var(--moorhen-shadow-xs);
+}
+
+.moorhen__button__default.disabled,
+.moorhen__button__default:disabled {
     background: var(--moorhen-disabled);
+    color: var(--moorhen-secondary);
+    cursor: not-allowed;
+    box-shadow: none;
+    opacity: 0.65;
+}
+
+.moorhen__button__default.disabled:hover,
+.moorhen__button__default:disabled:hover {
+    background: var(--moorhen-disabled);
+    box-shadow: none;
+    transform: none;
+    filter: none;
 }
 
 .moorhen__button__toggle-unchecked {
     background: var(--moorhen-background);
     color: var(--moorhen-primary);
+    border: 1px solid var(--moorhen-border);
+    box-shadow: none;
 }
+
+.moorhen__button__toggle-unchecked:hover {
+    background: var(--moorhen-background-shaded);
+    border-color: var(--moorhen-border-strong);
+}
+
+.moorhen__button__toggle-checked {
+    background: var(--moorhen-button-background);
+    color: var(--moorhen-button-text);
+    border: 1px solid transparent;
+}
+
+.moorhen__button__toggle-checked:hover {
+    background: var(--moorhen-button-background-hover);
+}
+
 .moorhen__button__default.danger {
     background: var(--moorhen-danger);
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-error-shadow);
+    box-shadow: var(--moorhen-shadow-xs);
+    color: var(--moorhen-secondary);
+}
+
+.moorhen__button__default.danger:hover {
+    background: var(--moorhen-error);
+    box-shadow: var(--moorhen-shadow-sm);
+}
+
+.moorhen__button__default.danger:focus-visible {
+    box-shadow:
+        0 0 0 3px var(--moorhen-error-shadow),
+        var(--moorhen-shadow-xs);
 }
 
 .moorhen__button__default.secondary {
     background: var(--moorhen-button-background-secondary);
+    color: var(--moorhen-button-text-secondary);
+    border: 1px solid var(--moorhen-border);
+    box-shadow: none;
+}
+
+.moorhen__button__default.secondary:hover {
+    background: var(--moorhen-button-background-secondary-hover);
+    border-color: var(--moorhen-border-strong);
 }
 
 .moorhen__button__default.outlined {
     color: var(--moorhen-primary);
-    background: none;
+    background: transparent;
     box-shadow: none;
+    border: 1px solid var(--moorhen-border-strong);
+}
+
+.moorhen__button__default.outlined:hover {
+    background: var(--moorhen-background-shaded);
+    border-color: var(--moorhen-accent);
+    color: var(--moorhen-accent);
 }
 
 .moorhen__button__default.white {
     color: var(--moorhen-primary);
-    background: none;
+    background: transparent;
     box-shadow: none;
     border: none;
 }
 
+.moorhen__button__default.white:hover {
+    background: var(--moorhen-background-shaded);
+}
+
 .moorhen__button__default.text {
     color: var(--moorhen-primary);
-    background: none;
+    background: transparent;
     box-shadow: none;
     border: none;
+}
+
+.moorhen__button__default.text:hover {
+    background: var(--moorhen-background-shaded);
 }
 
 .moorhen_button-text {
@@ -88,16 +189,5 @@
     box-shadow: none;
     border-color: transparent;
     filter: none;
-}
-
-.moorhen__button__default:hover {
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-focus);
-    border-color: var(--moorhen-secondary);
-    filter: brightness(1.1);
-}
-
-.moorhen__button__default.disabled:hover {
-    box-shadow: var(--moorhen-shadow-shape) var(--moorhen-inactive-shadow);
-    border-color: transparent;
-    filter: none;
+    background: var(--moorhen-background-shaded);
 }
