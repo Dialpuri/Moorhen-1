@@ -53,10 +53,16 @@
 }
 
 .moorhen__input__label-menu {
-    font-weight: bold;
+    font-family: var(--moorhen-font-family);
+    font-size: var(--moorhen-font-size-xs);
+    font-weight: var(--moorhen-font-weight-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--moorhen-text-muted);
     text-align: left;
-    margin-left: 1rem;
-    margin-top: 0.25rem;
+    margin-left: var(--moorhen-space-3);
+    margin-top: var(--moorhen-space-3);
+    margin-bottom: var(--moorhen-space-1);
 }
 
 .moorhen__input-files-upload:hover,

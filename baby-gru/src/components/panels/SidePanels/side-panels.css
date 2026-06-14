@@ -14,12 +14,13 @@
 
 .moorhen__panel-container {
     position: absolute;
-    top: 2.75rem; /* clear the horizontal toolbar */
-    max-height: calc(100% - 2.75rem);
+    top: 0; /* slide UNDER the horizontal toolbar — toolbar z-index sits above */
+    max-height: 100%;
     right: var(--side-panel-translate);
     display: flex;
     flex-direction: row;
     gap: 0;
+    padding-top: 2.75rem; /* visible content starts below toolbar */
     border-left: 1px solid var(--moorhen-border);
     background-color: var(--moorhen-background);
     color: var(--moorhen-primary);
@@ -143,9 +144,10 @@
 }
 
 @media (max-width: 960px) {
-    /* Toolbar moves to the left side, so panels can sit at top:0 again */
+    /* Toolbar moves to the left side, so panels can use the full height with no top inset */
     .moorhen__panel-container {
         top: 0;
         max-height: 100%;
+        padding-top: 0;
     }
 }
